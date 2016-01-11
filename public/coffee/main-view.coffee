@@ -10,17 +10,38 @@ $().ready ->
          nodes: []
          node:
             r: 5
-            activatedColor: '#e7edf3'
-            deactivatedColor: '#b6babe'
+            activatedColor: '#ebf0f5'
+            deactivatedColor: '#8e9194'
             noiseFactor: 0.008
             noiseExponent: 0.9
          mainCircle:
             r: 0
             x: 0
             y: 0
+            color: '#b6babe'
             activatedColor: '#e7edf3'
             deactivatedColor: '#b6babe'
 
+   crazyAnim = (data, time) ->
+      start = new Date
+      data.noiseExponent = 30.5
+      data.noiseFactor = 0.2
+
+      id = setInterval () =>
+         timePassed = new Date - start
+         progress = timePassed / time
+         progress = 1 if progress > 1
+
+         if progress == 1
+            data.noiseExponent = loadingCanvas.elements.node.noiseExponent
+            data.noiseFactor = loadingCanvas.elements.node.noiseFactor
+         else
+            data.noiseExponent -= 0.91
+            data.noiseFactor -= 0.0012
+         console.log("progress: "+progress+"  exponent: "+data.noiseExponent+"  factor: "+data.noiseFactor)
+         clearInterval(id) if (progress == 1)
+      , loadingCanvas.drawInterval
+ 
    # socket app
    socket = io(config.server.ip+':'+config.server.port)
    socket.on 'ping', (data) ->
@@ -34,8 +55,15 @@ $().ready ->
    
    saveSlave = (data) ->
       slaves.push(data)
+      if slaves.length < 4
+         loadingCanvas.elements.nodes[data.slaveId-1].connected = true
+         loadingCanvas.elements.nodes[data.slaveId-1].color = loadingCanvas.elements.nodes[data.slaveId-1].activatedColor
+         crazyAnim(loadingCanvas.elements.nodes[data.slaveId-1], 800)
+      else
+         if data.slaveId == 4
+            loadingCanvas.elements.mainCircle.connected = true
+            loadingCanvas.elements.mainCircle.color = loadingCanvas.elements.mainCircle.activatedColor
       socket.emit('readyToDraw') if slaves.length >= config.socket.maxConnections
-
 
    # Loading Canvas
    drawLoadingCanvas = (canvas, ctx) ->
@@ -57,7 +85,7 @@ $().ready ->
 
       # draw main circre
       ctx.lineWidth = 1
-      ctx.strokeStyle = loadingCanvas.elements.mainCircle.deactivatedColor
+      ctx.strokeStyle = loadingCanvas.elements.mainCircle.color
       ctx.beginPath()
       ctx.arc(
          loadingCanvas.elements.mainCircle.x,
@@ -69,8 +97,18 @@ $().ready ->
 
       # draw nodes
       for i in [0..2]
-         ctx.lineWidth = 1
-         ctx.strokeStyle = loadingCanvas.elements.nodes[i].deactivatedColor
+         if loadingCanvas.elements.nodes[i].connected
+            ctx.strokeStyle = loadingCanvas.elements.nodes[i].color
+            ctx.beginPath()
+            ctx.arc(
+               loadingCanvas.elements.nodes[i].x,
+               loadingCanvas.elements.nodes[i].y,
+               loadingCanvas.elements.nodes[i].r*5,
+               0,2*Math.PI)
+            ctx.stroke()
+            ctx.closePath()
+ 
+         ctx.strokeStyle = loadingCanvas.elements.nodes[i].color
          ctx.beginPath()
          ctx.arc(
             loadingCanvas.elements.nodes[i].x,
@@ -84,11 +122,14 @@ $().ready ->
          loadingCanvas.elements.nodes[i].noise += loadingCanvas.elements.nodes[i].noiseFactor
 
    # draw lines
+      ctx.lineWidth = 1
+      ctx.strokeStyle = loadingCanvas.elements.node.deactivatedColor
       oldpos =
          x: 0
          y: canvas.height/2.5
       ctx.setLineDash([5, 10])
       for i in [0..2]
+         console.log()
          ctx.beginPath()
          ctx.moveTo(oldpos.x,oldpos.y)
          ctx.lineTo(loadingCanvas.elements.nodes[i].x,loadingCanvas.elements.nodes[i].y)
@@ -139,6 +180,8 @@ $().ready ->
          loadingCanvas.elements.nodes[i].y = Math.random() * canvas.height / 4 + canvas.height / 3
          loadingCanvas.elements.nodes[i].x = (canvas.width - canvas.width/4)/3 * i + canvas.width/4
          loadingCanvas.elements.nodes[i].noise = Math.random() * 9999
+         loadingCanvas.elements.nodes[i].connected = false
+         loadingCanvas.elements.nodes[i].color = loadingCanvas.elements.node.deactivatedColor
 
       drawIntervall = setInterval () ->
          ctx.clearRect(0,0,canvas.width,canvas.height)

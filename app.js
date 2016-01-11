@@ -60,6 +60,7 @@ io.on('connection', function (socket) {
 
    socket.on('pushSlaveConnection', function(data) {
       console.log('slave ' + data.slaveId + ' is ready.')
+      console.log('View socket is: ', viewSocket)
       io.sockets.connected[viewSocket].emit('new Slave', data)
    })
 
