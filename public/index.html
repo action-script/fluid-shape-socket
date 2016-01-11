@@ -4,18 +4,90 @@
    <title>Fluid Mesh</title>
    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
    <style>
+      html {
+         overflow: hidden;
+         height: 100%;
+      }
       body {
          margin: 0;
          padding: 0;
+         height: 100%;
+         background-color: #000000;
+      }
+      .container {
+         color: white;
+         width: 100%;
+         height: 100%;
+         padding: 0;
+         margin: 0;
+      }
+
+      #wrapper {
+         position: absolute;
+         width: 0;
+         height: 0;
+         left: 0px;
+         right: 0px;
+         margin: 0 auto;
+         top: 50%;
+         -webkit-transform-style: preserve-3d;
+         /* -webkit-perspective: 4000; */
+         -webkit-transform-origin: top right;
+
+     /*    -webkit-transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale3d(0.5, 0.5, 0.5); */
+      }
+      #wrapper .plane {
+         position: absolute;
+         width: 500px;
+         height: 500px;
+         background-repeat: no-repeat !important;
+         box-shadow: -5px -5px 9px -2px rgba(224, 179, 96, 0.46);
+         box-shadow: -7px -7px 10px 1px rgba(197, 68, 73, 0.38);
+         background: -webkit-linear-gradient(-45deg, rgba(249, 193, 92, 0.82) 0%,rgba(146, 82, 19, 0) 70%);
+      }
+      .floor {
+         width: 500px;
+         height: 500px;
+         background-repeat: no-repeat !important;
+         background-color: blue;
+      }
+      .side1 {
+         background-color: green;
+         -webkit-transform: rotateY(-90deg);
+         -webkit-transform-origin: 0% 0 0;
+      }
+      .side2 {
+         background-color: orange;
+         -webkit-transform: rotateX(90deg);
+         -webkit-transform-origin: 100% 0 0;
+      }
+      .side3 {
+         background-color: red;
+         -webkit-transform: rotateX(90deg);
+         -webkit-transform-origin: 100% 100% 0;
       }
    </style>
 </head>
 
 <body>
-   <div class="container">
+   <div id="block" class="container">
+      <h1>Blocked</h1>
+   </div>
+   <div id="vertex" class="container">
+      <div id="wrapper">
+         <div class="floor plane">
+         </div>
+         <div class="side1 plane">
+         </div>
+         <div class="side2 plane">
+         </div>
+      </div>
+   </div>
+   <div id="camera" class="container">
    </div>
    <script src="components/socket.io-client/socket.io.js"></script>
    <script src="externals/jquery/dist/jquery.min.js"></script>
+   <script src="externals/underscore-min/underscore-min.js"></script>
    <script src="config"></script>
    <script src="javascript/main.js"></script>
 </body>
