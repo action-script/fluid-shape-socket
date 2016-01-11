@@ -1,0 +1,19 @@
+{
+  "name": "fluid-shape-socket",
+  "version": "0.0.0",
+  "authors": [
+    "Nuño de la Serna <nuno.serna@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/externals/",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.3"
+  }
+}
