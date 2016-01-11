@@ -1,3 +1,4 @@
 node_modules
 public/externals
 public/javascript
+*.swp
