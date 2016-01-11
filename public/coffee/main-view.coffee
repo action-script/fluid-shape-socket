@@ -36,8 +36,8 @@ $().ready ->
             data.noiseExponent = loadingCanvas.elements.node.noiseExponent
             data.noiseFactor = loadingCanvas.elements.node.noiseFactor
          else
-            data.noiseExponent -= 0.91
-            data.noiseFactor -= 0.0012
+            data.noiseExponent -= 0.95
+            data.noiseFactor -= 0.001
          console.log("progress: "+progress+"  exponent: "+data.noiseExponent+"  factor: "+data.noiseFactor)
          clearInterval(id) if (progress == 1)
       , loadingCanvas.drawInterval
@@ -76,7 +76,10 @@ $().ready ->
          canvas.height/2,
          canvas.width/1.5
       )
-      grd.addColorStop(0, '#1c2426')
+      if loadingCanvas.elements.mainCircle.connected
+         grd.addColorStop(0, '#3c484b')
+      else
+         grd.addColorStop(0, '#1c2426')
       grd.addColorStop(1, '#000000')
 
       # Fill BG
