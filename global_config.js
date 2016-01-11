@@ -1,9 +1,9 @@
 var config = {
    server: {
-      ip: '192.168.3.88',
+      ip: '10.230.0.234',
       port: '3000'
    },
-   sockets: {
+   socket: {
       maxConnections: 4
    },
    collision: {
