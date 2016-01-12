@@ -1,7 +1,8 @@
 $().ready ->
    window.config.socket.id = null
-   
-   $('.container').hide()
+   window.config.status = null
+   cameraPos = {x: 0, y:0}
+   acelerometer = {x: 0, y:0}
 
    # socket app
    socket = io(config.server.ip+':'+config.server.port)
@@ -14,8 +15,12 @@ $().ready ->
       console.log('connection confirmed', data)
       window.config.slaveId = data.slaveId
       socket.emit('pushSlaveConnection', { socketId: config.socket.id, slaveId: config.slaveId })
-      $('#vertex').show()
-      $('#vertex').append('<h2>Number: ' + config.slaveId + '</h2>')
+      config.status = 'vertex' if config.slaveId < 4
+      config.status = 'camera' if config.slaveId == 4
+
+      setInterval(calculateCameraPos, 100) if config.status == 'camera'
+
+      $('#' + config.status).show()
 
    socket.on 'blocked', (data) ->
       console.log('blocked')
@@ -24,24 +29,46 @@ $().ready ->
    socket.on 'readyToDraw', (data) ->
       console.log('readyToDraw')
 
+   # TODO: PUSH data
+   ###
    pushAcData = (ac) ->
       return unless ac? or ac[0]? or ac[1]?
       console.log("Aceletometer imput: \n x - %s \n y - %s", ac[0], ac[1])
       myPos =
             x: ac[0]
             y: ac[1]
-
+      
       socket.emit("pushAcData", {"ac":myPos.ac, "user_id": user_id})
-   #      appDraw.drawSphere(myPos)
+   ###
+   calculateCameraPos = ->
+      cameraPos.x += acelerometer.x/3.0 if acelerometer.x > 2 or acelerometer.x < -2
+      cameraPos.y += acelerometer.y/2.0 if acelerometer.y > 3 or acelerometer.y < -3
+      cameraPos.x = 40 if cameraPos.x > 40
+      cameraPos.x = -22 if cameraPos.x < -22
+      move3D(cameraPos)
 
+   pushAcPosData = (ac) ->
+      acelerometer.x = ac[0]
+      acelerometer.y = ac[1]
+      # TODO: push emit data
+      move3D(acelerometer) if config.status == 'vertex'
+      
    move3D = (ac) ->
-      $('#wrapper')[0].style.WebkitTransform =
-         'scale3d(0.5, 0.5, 0.5) ' +
-         'rotateX(' + ( - ac[0] - 35) + 'deg) ' +
-         'rotateY(' + (ac[1] + 135) + 'deg) ' +
-         'rotateZ(' + 0 + 'deg) '
+      if config.status == 'vertex'
+         $('#wrapper_v')[0].style.WebkitTransform =
+            'scale3d(0.5, 0.5, 0.5) ' +
+            'rotateX(' + ( - ac.x - 35) + 'deg) ' +
+            'rotateY(' + (ac.y + 135) + 'deg) ' +
+            'rotateZ(' + 0 + 'deg)'
 
-   tilt = _.throttle(move3D, 1)
+      if config.status == 'camera'
+         $('#wrapper_c')[0].style.WebkitTransform =
+            'scale3d(0.4, 0.4, 0.4) ' +
+            'rotateX(' + ( - ac.x - 110) + 'deg) ' +
+            'rotateY(' + 0 + 'deg) ' +
+            'rotateZ(' + ( ac.y + 45) + 'deg)'
+
+   tilt = _.throttle(pushAcPosData, 1)
 
    # acelerometer sensor
    if window.DeviceOrientationEvent

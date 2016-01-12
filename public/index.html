@@ -48,7 +48,7 @@
          box-shadow: inset 0px 0px 100px 30px black;
       }
 
-      #wrapper {
+      #wrapper_v {
          position: absolute;
          width: 0;
          height: 0;
@@ -61,7 +61,7 @@
          -webkit-transform-origin: top right;
          transform: scale3d(0.5, 0.5, 0.5) rotateX(-45deg) rotateY(135deg) rotateZ(0deg);
       }
-      #wrapper .plane {
+      #wrapper_v .plane {
          position: absolute;
          width: 500px;
          height: 500px;
@@ -71,26 +71,77 @@
          /* box-shadow: -7px -7px 10px 1px rgba(197, 68, 73, 0.38);
          background: -webkit-linear-gradient(-45deg, rgba(249, 193, 92, 0.82) 0%,rgba(146, 82, 19, 0) 70%); */
       }
-      .floor {
+      #wrapper_v .floor {
          width: 500px;
          height: 500px;
          background-repeat: no-repeat !important;
          background-color: blue;
       }
-      .side1 {
-         background-color: green;
+      #wrapper_v .side1 {
          -webkit-transform: rotateY(-90deg);
          -webkit-transform-origin: 0% 0 0;
       }
-      .side2 {
-         background-color: orange;
+      #wrapper_v .side2 {
          -webkit-transform: rotateX(90deg);
          -webkit-transform-origin: 100% 0 0;
       }
-      .side3 {
-         background-color: red;
+      #wrapper_v .side3 {
          -webkit-transform: rotateX(90deg);
          -webkit-transform-origin: 100% 100% 0;
+      }
+      #wrapper_c {
+         position: absolute;
+         width: 0px;
+         height: 0px;
+         left: 50%;
+         top: 10%;
+         margin-left: -250px;
+         -webkit-transform-style: preserve-3d;
+         /* -webkit-perspective: 4000; */
+         -webkit-transform-origin: 250px 250px 150px;
+         transform: scale3d(0.4, 0.4, 0.4) rotateX(-113deg) rotateY(0deg) rotateZ(45deg);
+      }
+      #wrapper_c .plane {
+         position: absolute;
+         width: 500px;
+         height: 800px;
+         background-repeat: no-repeat !important;
+         background: -webkit-linear-gradient(top, rgb(255, 255, 255) 0%,rgb(0, 0, 0) 90%);
+         box-shadow: inset 0px 0px 100px 50px rgba(0, 0, 0, 0.13);
+      }
+      #wrapper_c .top {
+         height: 500px;
+         background: #EFEFEF;
+         box-shadow: inset 0px 0px 100px 50px rgba(0, 0, 0, 0.13), 0px 0px 12px 8px rgba(255, 255, 255, 0.28);
+         transform: translateX(0px) translateY(0px) translateZ(0px);
+      }
+      #wrapper_c .circle {
+         width: 750px;
+         height: 750px;
+         border: solid 5px white;
+         border-radius: 100%;
+         background: transparent;
+         margin-left: -125px;
+         margin-top: -125px;
+         transform: translateX(0px) translateY(0px) translateZ(150px);
+         box-shadow: none;
+      }
+      #wrapper_c .side1 {
+         -webkit-transform: rotatex(90deg);
+         -webkit-transform-origin: 0% 0 0;
+      }
+      #wrapper_c .side2 {
+         -webkit-transform: rotateY(90deg) rotateZ(90deg);
+         -webkit-transform-origin: 0px 0px 0px;
+      }
+      #wrapper_c .side3 {
+         -webkit-transform: rotateY(-90deg) rotateZ(-90deg);
+         -webkit-transform-origin: 100% 0px 0px;
+      }
+      #wrapper_c .side4 {
+         -webkit-transform: rotateX(90deg);
+         -webkit-transform-origin: 100% 0px 0px;
+         top: 500px;
       }
    </style>
 </head>
@@ -102,7 +153,7 @@
    <div id="vertex" class="container" style="display: none;">
       <div class="giroscope-circle"></div>
       <div class="cover-mask"></div>
-      <div id="wrapper">
+      <div id="wrapper_v">
          <div class="floor plane">
          </div>
          <div class="side1 plane">
@@ -112,6 +163,21 @@
       </div>
    </div>
    <div id="camera" class="container" style="display: none;">
+      <div class="cover-mask"></div>
+      <div id="wrapper_c">
+         <div class="circle plane">
+         </div>
+         <div class="top plane">
+         </div>
+         <div class="side1 plane">
+         </div>
+         <div class="side2 plane">
+         </div>
+         <div class="side3 plane">
+         </div>
+         <div class="side4 plane">
+         </div>
+      </div>
    </div>
    <script src="components/socket.io-client/socket.io.js"></script>
    <script src="externals/jquery/dist/jquery.min.js"></script>
