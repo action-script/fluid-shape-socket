@@ -37,10 +37,9 @@ $().ready ->
    move3D = (ac) ->
       $('#wrapper')[0].style.WebkitTransform =
          'scale3d(0.5, 0.5, 0.5) ' +
-         'rotateX(' + ac[0] + 'deg) ' +
-         'rotateY(' + 0 + 'deg) ' +
-         'rotateZ(' + ac[1] + 'deg) '
-
+         'rotateX(' + ( - ac[0] - 35) + 'deg) ' +
+         'rotateY(' + (ac[1] + 135) + 'deg) ' +
+         'rotateZ(' + 0 + 'deg) '
 
    tilt = _.throttle(move3D, 1)
 
