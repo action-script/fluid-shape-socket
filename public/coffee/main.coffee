@@ -1,6 +1,6 @@
 $().ready ->
-   window.config.socket.id = null
-   window.config.status = null
+   window.config.socket.id = undefined
+   window.config.status = undefined
    cameraPos = {x: 0, y:0}
    acelerometer = {x: 0, y:0}
 

@@ -1,6 +1,6 @@
 var config = {
    server: {
-      ip: '192.168.2.44',
+      ip: '10.230.0.234',
       port: '3000'
    },
    socket: {
