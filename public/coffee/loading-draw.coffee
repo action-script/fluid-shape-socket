@@ -1,6 +1,6 @@
 LoadingCanvas = do ->
    noise = new Noise(Math.random())
-
+   drawLoopLoadingCanvas = undefined
    loadingCanvas =
       canvas: $ '<canvas/>', {'id':'loadingCanvas'}
       drawInterval: 1000/25
@@ -20,7 +20,14 @@ LoadingCanvas = do ->
             activatedColor: '#e7edf3'
             deactivatedColor: '#b6babe'
 
-   drawLoopLoadingCanvas = undefined
+   displayIndicator = ->
+      $('.slaveIndicator').show()
+
+   activateIndicator = (number) ->
+      $('.slaveIndicator').children('.slave:nth-child(' +number+')').addClass('activated')
+
+   removeIndicator = ->
+      $('.slaveIndicator').remove()
 
    crazyAnim = (data, time) ->
       start = new Date
@@ -141,9 +148,8 @@ LoadingCanvas = do ->
       ctx.fillStyle = grd
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-
    init = ->
-      $('body').empty().prepend(loadingCanvas.canvas)
+      $('body').prepend(loadingCanvas.canvas)
 
       canvas = loadingCanvas.canvas[0]
       canvas.width = window.innerWidth
@@ -168,10 +174,15 @@ LoadingCanvas = do ->
          draw(canvas, ctx)
       , loadingCanvas.drawInterval
 
+      displayIndicator()
+
    stop = ->
       clearInterval(drawLoopLoadingCanvas)
+      $(loadingCanvas.canvas).remove()
+      removeIndicator()
 
    activateSlave = (data) ->
+      activateIndicator(data.slaveId)
       if data.slaveId < 4
          loadingCanvas.elements.nodes[data.slaveId-1].connected = true
          loadingCanvas.elements.nodes[data.slaveId-1].color = loadingCanvas.elements.node.activatedColor

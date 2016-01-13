@@ -48,6 +48,10 @@ io.on('connection', function (socket) {
          }
          else
             socket.emit('confirmConnection', { slaveId: ++numberOfSlaves })
+            if (numberOfSlaves == 4) {
+               console.log('4 connections. Ready to be Drawn')
+               socket.broadcast.emit('readyToDraw')
+            }
       }
       // Save view socket
       else {
@@ -60,14 +64,8 @@ io.on('connection', function (socket) {
 
    socket.on('pushSlaveConnection', function(data) {
       console.log('slave ' + data.slaveId + ' is ready.')
-      console.log('View socket is: ', viewSocket)
       io.sockets.connected[viewSocket].emit('new Slave', data)
    })
-
-   socket.on('readyToDraw', function(data) {
-      console.log("ready to draw");
-      socket.broadcast.emit('readyToDraw')
-   })   
 
    socket.on('pushPosition', function(data) {
       console.log('position data: ', data)

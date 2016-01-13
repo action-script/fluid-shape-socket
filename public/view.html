@@ -8,6 +8,7 @@
          overflow: hidden;
       }
       body {
+         background-color: #000;
          margin: 0;
          padding: 0;
       }
@@ -16,10 +17,48 @@
          height: 100%;
          border: 0;
       }
+      .slaveIndicator {
+         position: absolute;
+         width: 20%;
+         left: 40%;
+         top: 75%;
+         z-index: 1000;
+      }
+      .slaveIndicator .slave {
+         width: 8%;
+         padding-top: 8%;
+         position: relative;
+         margin-right: 22.66%;
+         float: left;
+         background-repeat: no-repeat;
+         background-size: 100%;
+         background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABXCAYAAADyDOBXAAAD30lEQVR42u2dO2gUQRjHLzEPE4mGxEcjEcRCJZ4kYBE7QVQsfGCCojaSRhAEG6MWORACWog2FiKoCDYGYkynIBJRC/VU0MJCUEHUcOL5PMPdXj6/0QsJ5i53uzuzM7P7/8E0MY/N/5dvZva7WS8WsxwiquZxmUc8BowQUkdT1CER/UI2TxOyFYloJJVKNdFMapGMvuo4XUTIUSSjR0YnlSCbzXYioeCFjFJpRpFQsDK2U3l2IKlgZFTxeFHOxsTExEvxuUhMvZA+qpxjSEytjMZ8Pu/CB/3CzaJCeBq6RS7hr7mN5NRURwMPh9wjvqYRCUqGp6okeSeJBOVWR5cPGWLaEjeL65GkHBlzuDp+kk9YivgeNUjUv5AjJI+DSNSfjBaSTzOS9b7NvSrbBk9/l5Cst+roIHV0IGH31fFGoZC3SNhddXSTenqQdGUy6nme/xCAkPfiZyHx8nfk/RQc6AbPRiaTWSruqgNknMcSJF96uhqi4BlC8sVlrCZ9rIKBmdvchxqFPICBaTiOc0CjjL/dYL6GPTAxVR0p0s8YTPzb5l4kczgb9YW8qbD1NIVxcV44qjKqypw+1AJX7J1InufiX3oNmUt71GTU8kL+3VQbhWuriZKQbjKfnVGRMZ/HbwuEZMSmIwpC+skSeIE/Efp+VcDdXL/keKwM8x35CFkGV8lwWKtjE9nLxrDJEKcPn1ks5JH4DwrC1K/qI/s5HKYWyVfbbYiOdCKRqA7DQn6TwsN126ujxbBurt8qGbf6bDBffJLCxxNbZYizufkQChG/U9w2GXNdPi1rG6LPVW+TkF4KP/ttkbGIokOrDTeBZyIkZMCGhTwyFDrXcZOF3KOIwVLuGinDcZzdFF12mVYZDfyX8jrCQl4ZtQ3mi0kQOG6KjFaujh/wQV/S6bT+PpeNL8sqXOCHdVfHcnEdUDHlhEebzup4Dgf/dR7z+adaZORyuW0h7ebK6AZvCfxlWf5L+IbsS64lnynIE/T8w04i9rL0BSVjMbKumIXKpyoux0HkXPECf03p1BW1bq4k4qpkiLcWeod8PfW55FeJ4zh7ka1nemRXxwJDniW3lU8k8+Ef/mYDyNQ3CVkyVpAdj6CZjnhjgGUyhNxAltLu4Af99qs2IEa5ZLPZLnRzzSLpdao6RHitQ8nMxaPXy4E3bHPVrSUf3VbHFcSmvM91oVIZzRSih2wMRtxKzKukX/UYWQXGfZrt6V7+x3XIKHDWlnzIhkca+QTOGBU79cgf3IdstNFT7CGbHHLRhsi+ZVJGG2/BziET7dvgU5NCzosWCyLRjnDQHiu8nRww4w5+5A+chSfXlmeGCAAAAABJRU5ErkJggg==);
+         opacity: 0.4;
+         filter: alpha(opacity=40); /* For IE8 and earlier */
+      }
+      .slaveIndicator .slave:last-child {
+         margin-right: 0px;
+         -webkit-transform: rotate(180deg);
+         -moz-transform: rotate(180deg);
+         -ms-transform: rotate(180deg);
+         -o-transform: rotate(180deg);
+         transform: rotate(180deg);
+         background-position: bottom;
+      }
+      .slaveIndicator .slave.activated {
+         opacity: 1;
+         filter: alpha(opacity=100); /* For IE8 and earlier */
+      }
    </style>
 </head>
 
 <body>
+   <div class="slaveIndicator" style="display: none;">
+      <div class="slave"></div>
+      <div class="slave"></div>
+      <div class="slave"></div>
+      <div class="slave"></div>
+   </div>
    <script src="components/socket.io-client/socket.io.js"></script>
    <script src="externals/jquery/dist/jquery.min.js"></script>
    <script src="externals/noisejs/index.js"></script>

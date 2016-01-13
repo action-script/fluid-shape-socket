@@ -12,10 +12,12 @@ $().ready ->
   
    socket.on 'new Slave', (data) ->
       console.log('I got a new slave', data)
-      saveSlave(data)
-   
-   saveSlave = (data) ->
       slaves.push(data)
       LoadingCanvas.activateSlave(data)
-      socket.emit('readyToDraw') if slaves.length >= config.socket.maxConnections
+
+   socket.on 'readyToDraw', (data) ->
+      setTimeout () ->
+         LoadingCanvas.stop()
+      , 5000
+      console.log('ready to be drawn')
 
