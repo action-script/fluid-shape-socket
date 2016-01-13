@@ -18,6 +18,7 @@ $().ready ->
    socket.on 'readyToDraw', (data) ->
       setTimeout () ->
          LoadingCanvas.stop()
-      , 5000
+         MeshCanvas.init()
+      , 2000
       console.log('ready to be drawn')
 
