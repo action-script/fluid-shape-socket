@@ -116,6 +116,12 @@ MeshCanvas = do ->
          'mmodel')
       throw ('Could not bind uniform mmodel') unless meshCanvas.program.modelMatrixUniform?
 
+   updateVertexPos = (data) ->
+      gl.bindBuffer gl.ARRAY_BUFFER, meshCanvas.vbo
+      vertices = [data.pos.x, data.pos.y, 0]
+      # buffer_type, array_offset, new_data
+      gl.bufferSubData gl.ARRAY_BUFFER, data.slaveId*8, new Float32Array(vertices)
+
    createCamera = ->
       # compute camera matrix using look at
       meshCanvas.camera =
@@ -207,7 +213,6 @@ MeshCanvas = do ->
       gl = getWebGLContext(canvas)
       console.log('webgl not working') unless gl
 
-      gl.viewport(0, 0, canvas.width, canvas.height)
       try
          loadResources()
       catch e
@@ -217,5 +222,6 @@ MeshCanvas = do ->
       setUpRender()
 
    return {
-      init
+      init,
+      updateVertexPos
    }

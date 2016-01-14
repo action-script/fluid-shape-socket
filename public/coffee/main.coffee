@@ -29,17 +29,6 @@ $().ready ->
    socket.on 'readyToDraw', (data) ->
       console.log('readyToDraw')
 
-   # TODO: PUSH data
-   ###
-   pushAcData = (ac) ->
-      return unless ac? or ac[0]? or ac[1]?
-      console.log("Aceletometer imput: \n x - %s \n y - %s", ac[0], ac[1])
-      myPos =
-            x: ac[0]
-            y: ac[1]
-      
-      socket.emit("pushAcData", {"ac":myPos.ac, "user_id": user_id})
-   ###
    calculateCameraPos = ->
       cameraPos.x += acelerometer.x/3.0 if acelerometer.x > 2 or acelerometer.x < -2
       cameraPos.y += acelerometer.y/2.0 if acelerometer.y > 3 or acelerometer.y < -3
@@ -50,8 +39,14 @@ $().ready ->
    pushAcPosData = (ac) ->
       acelerometer.x = ac[0]
       acelerometer.y = ac[1]
-      # TODO: push emit data
       move3D(acelerometer) if config.status == 'vertex'
+
+      #socket.emit("pushAcData", {"ac":myPos.ac, "user_id": user_id})
+      socket.emit 'pushPosition',
+         'slaveId': window.config.slaveId,
+         'pos':
+            'x': acelerometer.x,
+            'y': acelerometer.y
       
    move3D = (ac) ->
       if config.status == 'vertex'
