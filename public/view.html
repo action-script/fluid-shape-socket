@@ -61,20 +61,24 @@
    </div>
    <script id="meshVertexShader" type="x-shader/x-vertex">
    attribute vec3 vposition;
-    
+   uniform mat4 mprojection;
+   uniform mat4 mview;
+   uniform mat4 mmodel;
+
    void main() {
-      gl_Position = vec4(vposition, 1);
+      gl_Position = mprojection * mview * mmodel * vec4(vposition, 1);
    }
    </script>
        
    <script id="meshFragmentShader" type="x-shader/x-fragment">
    void main() {
-      gl_FragColor = vec4(0, 1, 0, 1);  // green
+      gl_FragColor = vec4(1, 1, 1, 1);
    }
    </script>
    <script src="components/socket.io-client/socket.io.js"></script>
    <script src="externals/jquery/dist/jquery.min.js"></script>
    <script src="externals/noisejs/index.js"></script>
+   <script src="externals/gl-matrix/dist/gl-matrix-min.js"></script>
    <script src="config"></script>
    <script src="javascript/loading-draw.js"></script>
    <script src="javascript/mesh-draw.js"></script>

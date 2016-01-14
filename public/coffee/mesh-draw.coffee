@@ -2,13 +2,18 @@ MeshCanvas = do ->
    gl = undefined
    meshCanvas =
       canvas: $ '<canvas/>', {'id':'meshCanvas'}
-      drawInterval: 1000/25
+      drawInterval: 40
+      darwLoopId: undefined
+      time: 0.0
       nodes: []
       vertex: [
-         0.0, 0.0, 0.0,
-         1.0, 0.0, 0.0,
-         1.0, 1.0, 0.0
+         -1.0, .5, 0.0,
+         0.0, -1.0, 0.0,
+         1.0, .5, 0.0
       ]
+
+   radians = (degrees) ->
+      degrees * Math.PI / 180
 
    getWebGLContext = (canvas) ->
       names = ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl']
@@ -27,7 +32,9 @@ MeshCanvas = do ->
 
       # set up attrib pointer
       gl.enableVertexAttribArray meshCanvas.program.vertexPositionAttribute # Attrib location id pointer
-      gl.vertexAttribPointer meshCanvas.program.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0
+      gl.vertexAttribPointer(
+         meshCanvas.program.vertexPositionAttribute,
+         3, gl.FLOAT, false, 0, 0)
 
    checkShaderError = (object, program = false) ->
       if program and gl.isProgram object
@@ -87,28 +94,106 @@ MeshCanvas = do ->
       checkShaderError(meshCanvas.program.shaderProgram, true)
 
       # bind the attribute locations
-      meshCanvas.program.vertexPositionAttribute = gl.getAttribLocation meshCanvas.program.shaderProgram, 'vposition'
+      meshCanvas.program.vertexPositionAttribute = gl.getAttribLocation(
+         meshCanvas.program.shaderProgram,
+         'vposition')
       throw ('Error: attribute not found') if meshCanvas.program.vertexPositionAttribute < 0
 
+      # TODO: generic bind and check
+      # bind uniform locations
+      meshCanvas.program.projectionMatrixUniform = gl.getUniformLocation(
+         meshCanvas.program.shaderProgram,
+         'mprojection')
+      throw ('Could not bind uniform mprojection') unless meshCanvas.program.projectionMatrixUniform?
+
+      meshCanvas.program.viewMatrixUniform = gl.getUniformLocation(
+         meshCanvas.program.shaderProgram,
+         'mview')
+      throw ('Could not bind uniform mview') unless meshCanvas.program.viewMatrixUniform?
+
+      meshCanvas.program.modelMatrixUniform = gl.getUniformLocation(
+         meshCanvas.program.shaderProgram,
+         'mmodel')
+      throw ('Could not bind uniform mmodel') unless meshCanvas.program.modelMatrixUniform?
+
+   createCamera = ->
+      # compute camera matrix using look at
+      meshCanvas.camera =
+         modelMatrix: mat4.create()
+         viewMatrix: mat4.create()
+         projectionMatrix: mat4.create()
+
+      # default position of the mesh
+      mat4.identity(meshCanvas.camera.modelMatrix) # set to identity
+      translation = vec3.create()
+      vec3.set(translation, 0, 0, 0)
+      mat4.translate(
+         meshCanvas.camera.modelMatrix,
+         meshCanvas.camera.modelMatrix,
+         translation)
+
+      # camera view (eye, center, up)
+      mat4.lookAt(
+         meshCanvas.camera.viewMatrix,
+         [0, 0, -2],
+         [0, 0, 0],
+         [0, 1, 0])
+
+      # world projection (fov, aspect, near, far)
+      mat4.perspective(
+         meshCanvas.camera.projectionMatrix,
+         radians(70),
+         meshCanvas.aspect,
+         0.1, 100)
+
+   setShaderCamera = ->
+      gl.uniformMatrix4fv(
+         meshCanvas.program.projectionMatrixUniform,
+         false,
+         meshCanvas.camera.projectionMatrix)
+
+      gl.uniformMatrix4fv(
+         meshCanvas.program.viewMatrixUniform,
+         false,
+         meshCanvas.camera.viewMatrix)
+
+      gl.uniformMatrix4fv(
+         meshCanvas.program.modelMatrixUniform,
+         false,
+         meshCanvas.camera.modelMatrix)
+
    draw = ->
+      # clear BG as black
+      gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
       gl.useProgram meshCanvas.program.shaderProgram
+      setShaderCamera()
       gl.bindBuffer gl.ARRAY_BUFFER, meshCanvas.vbo
       gl.drawArrays(gl.TRIANGLES, 0, meshCanvas.vertex.length/3)
+      return
+
+   updateTime = ->
+      meshCanvas.time += 0.01
+      requestAnimationFrame draw
       return
 
    loadResources = ->
       createShaderProgram()
       initMeshBuffers()
-
-      ###
-      initShaders()
-      initPrimitives()
-      initRendering()
-      initHandlers()
-      initTextures()
-      ###
-      # requestAnimationFrame(drawScene);
+      createCamera()
       return
+
+   setUpRender = ->
+      gl.clearColor 0.0, 0.0, 0.0, 1.0
+      # enable alpha
+      gl.blendFunc gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA
+      # near things obscure far things
+      gl.depthFunc gl.LEQUAL
+
+      # 3D z geometry
+      gl.enable gl.DEPTH_TEST
+      # setShaderLight();
+
+      meshCanvas.drawLoopId = setInterval(updateTime, meshCanvas.drawInterval)
 
    init = ->
       $('body').prepend(meshCanvas.canvas)
@@ -117,17 +202,20 @@ MeshCanvas = do ->
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 
+      meshCanvas.aspect = window.innerWidth / window.innerHeight
+
       gl = getWebGLContext(canvas)
       console.log('webgl not working') unless gl
 
+      gl.viewport(0, 0, canvas.width, canvas.height)
       try
          loadResources()
       catch e
          return console.log 'Error loading sources\n', e
 
       # if the resources are loaded and running
-      draw()
-   
+      setUpRender()
+
    return {
       init
    }
