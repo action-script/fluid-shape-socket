@@ -59,6 +59,19 @@
       <div class="slave"></div>
       <div class="slave"></div>
    </div>
+   <script id="meshVertexShader" type="x-shader/x-vertex">
+   attribute vec3 vposition;
+    
+   void main() {
+      gl_Position = vec4(vposition, 1);
+   }
+   </script>
+       
+   <script id="meshFragmentShader" type="x-shader/x-fragment">
+   void main() {
+      gl_FragColor = vec4(0, 1, 0, 1);  // green
+   }
+   </script>
    <script src="components/socket.io-client/socket.io.js"></script>
    <script src="externals/jquery/dist/jquery.min.js"></script>
    <script src="externals/noisejs/index.js"></script>
