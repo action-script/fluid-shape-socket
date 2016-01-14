@@ -10,7 +10,6 @@ MeshCanvas = do ->
          1.0, 1.0, 0.0
       ]
 
-
    getWebGLContext = (canvas) ->
       names = ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl']
       for name in names
@@ -125,8 +124,8 @@ MeshCanvas = do ->
          loadResources()
       catch e
          return console.log 'Error loading sources\n', e
-         
 
+      # if the resources are loaded and running
       draw()
    
    return {
