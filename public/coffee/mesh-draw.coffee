@@ -7,10 +7,11 @@ MeshCanvas = do ->
       time: 0.0
       nodes: []
       vertex: [
-         -1.0, .5, 0.0,
-         0.0, -1.0, 0.0,
-         1.0, .5, 0.0
+         -1.0, -.5, 0.0,
+         1.0, -.5, 0.0,
+         0.0, 1.0, 0.0
       ]
+      acReduction: 25.5
 
    radians = (degrees) ->
       degrees * Math.PI / 180
@@ -118,9 +119,14 @@ MeshCanvas = do ->
 
    updateVertexPos = (data) ->
       gl.bindBuffer gl.ARRAY_BUFFER, meshCanvas.vbo
-      vertices = [data.pos.x, data.pos.y, 0]
+      vertices = [
+         meshCanvas.vertex[3*(data.slaveId-1)] + data.pos.y/meshCanvas.acReduction,
+         meshCanvas.vertex[3*(data.slaveId-1)+1] + data.pos.x/meshCanvas.acReduction,
+         0.0]
       # buffer_type, array_offset, new_data
-      gl.bufferSubData gl.ARRAY_BUFFER, data.slaveId*8, new Float32Array(vertices)
+      gl.bufferSubData gl.ARRAY_BUFFER,
+         (data.slaveId-1)*4*3, # 3 poinrs x Vertex, 4 bytes x Float (float32 bits)
+         new Float32Array(vertices)
 
    createCamera = ->
       # compute camera matrix using look at
@@ -141,7 +147,7 @@ MeshCanvas = do ->
       # camera view (eye, center, up)
       mat4.lookAt(
          meshCanvas.camera.viewMatrix,
-         [0, 0, -2],
+         [0, 0, 2],
          [0, 0, 0],
          [0, 1, 0])
 

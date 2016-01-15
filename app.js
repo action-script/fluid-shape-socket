@@ -68,7 +68,7 @@ io.on('connection', function (socket) {
    })
 
    socket.on('pushPosition', function(data) {
-      console.log('position data: ', data)
+//      console.log('position data: ', data)
       io.sockets.connected[viewSocket].emit('newPosition', data)
    })
 

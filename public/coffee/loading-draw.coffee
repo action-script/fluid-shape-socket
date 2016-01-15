@@ -27,7 +27,7 @@ LoadingCanvas = do ->
       $('.slaveIndicator').children('.slave:nth-child(' +number+')').addClass('activated')
 
    removeIndicator = ->
-      $('.slaveIndicator').remove()
+      $('.slaveIndicator').hide()
 
    crazyAnim = (data, time) ->
       start = new Date

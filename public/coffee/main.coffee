@@ -42,11 +42,12 @@ $().ready ->
       move3D(acelerometer) if config.status == 'vertex'
 
       #socket.emit("pushAcData", {"ac":myPos.ac, "user_id": user_id})
-      socket.emit 'pushPosition',
-         'slaveId': window.config.slaveId,
-         'pos':
-            'x': acelerometer.x,
-            'y': acelerometer.y
+      if config.status?
+         socket.emit 'pushPosition',
+            'slaveId': window.config.slaveId,
+            'pos':
+               'x': acelerometer.x,
+               'y': acelerometer.y
       
    move3D = (ac) ->
       if config.status == 'vertex'
