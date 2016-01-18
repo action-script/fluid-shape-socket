@@ -5,13 +5,17 @@ MeshCanvas = do ->
       drawInterval: 40
       darwLoopId: undefined
       time: 0.0
-      nodes: []
-      vertex: [
-         -1.0, -.5, 0.0,
-         1.0, -.5, 0.0,
-         0.0, 1.0, 0.0
-      ]
       acReduction: 25.5
+      ready: false
+      theMesh:
+         triangleVertex: [ # reference of original triangle shape
+            -1.0, -.5, 0.0,
+            1.0, -.5, 0.0,
+            0.0, 1.0, 0.0
+         ]
+         levelVertex: [] # modification of current level
+         vertex:[] # accumulation of vertex
+         index:[] # index elements
 
    radians = (degrees) ->
       degrees * Math.PI / 180
@@ -22,20 +26,49 @@ MeshCanvas = do ->
         try
           return canvas.getContext(name)
         catch e
-          console.log()
+          console.log('error canvas context')
 
    # TODO: Init color buffer, vertex, normal, etc....
-   initMeshBuffers = ->
+   initMeshBuffer = (mesh) ->
       # generate and bind the buffer object
-      meshCanvas.vbo = gl.createBuffer()
-      gl.bindBuffer gl.ARRAY_BUFFER, meshCanvas.vbo
-      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(meshCanvas.vertex), gl.DYNAMIC_DRAW # Dynamic access to the vertex
+      mesh.vbo = gl.createBuffer()
+      gl.bindBuffer gl.ARRAY_BUFFER, mesh.vbo
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(mesh.vertex), gl.DYNAMIC_DRAW # Dynamic access to the vertex
 
       # set up attrib pointer
       gl.enableVertexAttribArray meshCanvas.program.vertexPositionAttribute # Attrib location id pointer
       gl.vertexAttribPointer(
          meshCanvas.program.vertexPositionAttribute,
          3, gl.FLOAT, false, 0, 0)
+
+      if mesh.index? && mesh.index.length > 0
+         mesh.ibo = gl.createBuffer()
+         gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, mesh.ibo
+         gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.index), gl.STATIC_DRAW
+
+   addLevel = ->
+      l = (meshCanvas.theMesh.vertex.length - 3*3) / 3 # 3 float per vertex, 3 vertex
+      # a = a.splice(0, a.length - b.length).concat(b);
+      meshCanvas.theMesh.vertex = meshCanvas.theMesh.vertex.splice(0, meshCanvas.theMesh.vertex.length-meshCanvas.theMesh.levelVertex.length ).concat( meshCanvas.theMesh.levelVertex, meshCanvas.theMesh.levelVertex )
+      # calculate triangle index to draw elements
+      for v in [0..2]
+         i = v+l
+         meshCanvas.theMesh.index.push(
+            i,
+            l+(i+1)%3,
+            i+3,
+
+            i+3,
+            l+(i+1)%3,
+            l+(i+1)%3+3
+         )
+
+   initGeometry = ->
+      # theMesh
+      meshCanvas.theMesh.levelVertex = meshCanvas.theMesh.levelVertex.concat(meshCanvas.theMesh.triangleVertex)
+      meshCanvas.theMesh.vertex = meshCanvas.theMesh.vertex.concat(meshCanvas.theMesh.triangleVertex)
+      addLevel()
+      initMeshBuffer(meshCanvas.theMesh)
 
    checkShaderError = (object, program = false) ->
       if program and gl.isProgram object
@@ -117,16 +150,33 @@ MeshCanvas = do ->
          'mmodel')
       throw ('Could not bind uniform mmodel') unless meshCanvas.program.modelMatrixUniform?
 
-   updateVertexPos = (data) ->
-      gl.bindBuffer gl.ARRAY_BUFFER, meshCanvas.vbo
-      vertices = [
-         meshCanvas.vertex[3*(data.slaveId-1)] + data.pos.y/meshCanvas.acReduction,
-         meshCanvas.vertex[3*(data.slaveId-1)+1] + data.pos.x/meshCanvas.acReduction,
-         0.0]
+   updateVertexPos = ->
+      l = meshCanvas.theMesh.vertex.length - 3*3 # 3 float per vertex, 3 vertex
+      gl.bindBuffer gl.ARRAY_BUFFER, meshCanvas.theMesh.vbo
       # buffer_type, array_offset, new_data
       gl.bufferSubData gl.ARRAY_BUFFER,
-         (data.slaveId-1)*4*3, # 3 poinrs x Vertex, 4 bytes x Float (float32 bits)
-         new Float32Array(vertices)
+         l*4, # 3 poinrs x Vertex, 4 bytes x Float (float32 bits)
+         new Float32Array(meshCanvas.theMesh.levelVertex)
+
+   repostMeshData = ->
+      ###
+      for i,c in meshCanvas.theMesh.index
+         console.log c+' v:'+i+' ['+meshCanvas.theMesh.vertex[i+2]+', '+meshCanvas.theMesh.vertex[i+1]+', '+meshCanvas.theMesh.vertex[i+2]+']'
+      ###
+      gl.bindBuffer gl.ARRAY_BUFFER, meshCanvas.theMesh.vbo
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(meshCanvas.theMesh.vertex), gl.DYNAMIC_DRAW
+
+      gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, meshCanvas.theMesh.ibo
+      gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(meshCanvas.theMesh.index), gl.STATIC_DRAW
+
+   pushVertexPos = (data) ->
+      if meshCanvas.ready
+         meshCanvas.theMesh.levelVertex[3*(data.slaveId-1)] =
+            meshCanvas.theMesh.triangleVertex[3*(data.slaveId-1)] +
+               data.pos.y/meshCanvas.acReduction
+         meshCanvas.theMesh.levelVertex[3*(data.slaveId-1)+1] =
+            meshCanvas.theMesh.triangleVertex[3*(data.slaveId-1)+1] +
+               data.pos.x/meshCanvas.acReduction
 
    createCamera = ->
       # compute camera matrix using look at
@@ -148,7 +198,7 @@ MeshCanvas = do ->
       mat4.lookAt(
          meshCanvas.camera.viewMatrix,
          [0, 0, 2],
-         [0, 0, 0],
+         [0, 0, 1],
          [0, 1, 0])
 
       # world projection (fov, aspect, near, far)
@@ -158,7 +208,16 @@ MeshCanvas = do ->
          meshCanvas.aspect,
          0.1, 100)
 
+   calculateCamera = ->
+      # camera view (eye, center, up)
+      mat4.lookAt(
+         meshCanvas.camera.viewMatrix,
+         [Math.sin(meshCanvas.time)*5.5, Math.cos(meshCanvas.time)*5.5, 1.2+meshCanvas.time/2.0],
+         [0, 0, meshCanvas.time/2.0],
+         [0, 1, 0])
+
    setShaderCamera = ->
+      calculateCamera()
       gl.uniformMatrix4fv(
          meshCanvas.program.projectionMatrixUniform,
          false,
@@ -179,19 +238,29 @@ MeshCanvas = do ->
       gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
       gl.useProgram meshCanvas.program.shaderProgram
       setShaderCamera()
+      updateVertexPos()
       gl.bindBuffer gl.ARRAY_BUFFER, meshCanvas.vbo
-      gl.drawArrays(gl.TRIANGLES, 0, meshCanvas.vertex.length/3)
+#      gl.drawArrays(gl.TRIANGLES, 0, meshCanvas.vertex.length/3)
+      gl.drawElements gl.LINE_STRIP, meshCanvas.theMesh.index.length, gl.UNSIGNED_SHORT, 0
       return
 
    updateTime = ->
       meshCanvas.time += 0.01
+      # increase height of level
+      for i in [0..2]
+         meshCanvas.theMesh.levelVertex[i*3+2] = meshCanvas.time/3.0
       requestAnimationFrame draw
       return
 
    loadResources = ->
       createShaderProgram()
-      initMeshBuffers()
+      initGeometry()
       createCamera()
+      # TODO: remove hack
+      setInterval () ->
+         addLevel()
+         repostMeshData()
+      , 300
       return
 
    setUpRender = ->
@@ -224,10 +293,11 @@ MeshCanvas = do ->
       catch e
          return console.log 'Error loading sources\n', e
 
+      meshCanvas.ready = true
       # if the resources are loaded and running
       setUpRender()
 
    return {
       init,
-      updateVertexPos
+      pushVertexPos
    }

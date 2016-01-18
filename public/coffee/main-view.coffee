@@ -26,4 +26,4 @@ $().ready ->
 
    socket.on 'newPosition', (data) ->
       console.log('new position')
-      MeshCanvas.updateVertexPos(data) if config.drawing && data.slaveId < 4
+      MeshCanvas.pushVertexPos(data) if config.drawing && data.slaveId < 4

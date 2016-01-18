@@ -64,17 +64,20 @@
    uniform mat4 mprojection;
    uniform mat4 mview;
    uniform mat4 mmodel;
-
    void main() {
       gl_Position = mprojection * mview * mmodel * vec4(vposition, 1);
    }
    </script>
        
    <script id="meshFragmentShader" type="x-shader/x-fragment">
+   highp vec4 top = vec4(1.0, 1.0, 1.0, 1.0);
+   highp vec4 bottom = vec4(0.0, 0.0, 0.0, 1.0);
+   highp float res = 800.;
    void main() {
-      gl_FragColor = vec4(1, 1, 1, 1);
+      gl_FragColor = vec4(mix(bottom, top, ( gl_FragCoord.y / res )));
    }
    </script>
+   <!-- gl_FragColor = vec4(1, 1, 1, 1); -->
    <script src="components/socket.io-client/socket.io.js"></script>
    <script src="externals/jquery/dist/jquery.min.js"></script>
    <script src="externals/noisejs/index.js"></script>
