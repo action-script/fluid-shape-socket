@@ -19,7 +19,7 @@ module.exports = (grunt) ->
             separator: '/* ---- */\n',
          dev:
             files:
-               'public/dist/view/main.js': ['public/javascript/helper.js', 'public/javascript/webgl.js', 'public/javascript/shader.js', 'public/javascript/mesh.coffe', 'public/javascript/mesh-draw.js', 'public/javascript/loading-draw.js', 'public/javascript/main.js']
+               'public/dist/view/main.js': ['public/javascript/helper.js', 'public/javascript/webgl.js', 'public/javascript/shader.js', 'public/javascript/camera.js', 'public/javascript/mesh.js', 'public/javascript/themesh.js', 'public/javascript/mesh-draw.js', 'public/javascript/loading-draw.js', 'public/javascript/main-view.js']
                # 'public/dist/slave/main.js': []
 
       watch:
