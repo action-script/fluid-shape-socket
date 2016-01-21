@@ -6,41 +6,44 @@ MeshCanvas = do ->
       darwLoopId: undefined
       time: 0.0
       acReduction: 30.5
+      growVelcity: 0.007
       ready: false
 
    pushVertexPos = (data) ->
+      # TODO: include it on TheMesh class
       if meshCanvas.ready
-         meshCanvas.theMesh.levelVertex[3*(data.slaveId-1)] =
-            meshCanvas.theMesh.triangleVertex[3*(data.slaveId-1)] +
+         meshCanvas.theMesh.mesh.levelVertex[3*(data.slaveId-1)] =
+            meshCanvas.theMesh.mesh.triangleVertex[3*(data.slaveId-1)] +
                data.pos.y/meshCanvas.acReduction
-         meshCanvas.theMesh.levelVertex[3*(data.slaveId-1)+1] =
-            meshCanvas.theMesh.triangleVertex[3*(data.slaveId-1)+1] +
+         meshCanvas.theMesh.mesh.levelVertex[3*(data.slaveId-1)+1] =
+            meshCanvas.theMesh.mesh.triangleVertex[3*(data.slaveId-1)+1] +
                data.pos.x/meshCanvas.acReduction
 
    draw = ->
       # clear BG as black
       gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
-      # meshCanvas.theMesh.shader.use()
-      meshCanvas.camera.use()
 
+      meshCanvas.theMesh.shader.use()
+      meshCanvas.theMesh.shader.setUniform( 'time', 'uniform1f', meshCanvas.time )
       # pass model to shaders
-      gl.uniformMatrix4fv(
-         meshCanvas.theMesh.shader.modelMatrixUniform,
-         false,
-         meshCanvas.theMesh.modelMatrix)
+      meshCanvas.theMesh.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.theMesh.modelMatrix )
+
+      meshCanvas.camera.use()
 
       meshCanvas.theMesh.mesh.draw()
       return
 
    updateTime = ->
-      meshCanvas.time += 0.01
+      meshCanvas.time += 0.001
       # increase height of level
       # TODO: Mesh function to update pos
       for i in [0..2]
-         meshCanvas.theMesh.mesh.levelVertex[i*3+2] = meshCanvas.time/3.0
+         meshCanvas.theMesh.mesh.levelVertex[i*3+2] += meshCanvas.growVelcity
 
-      meshCanvas.camera.offset_position = [0, 0, 0.01/3.0]
-      meshCanvas.camera.offset_center =   [0, 0, 0.01/3.0]
+#      meshCanvas.camera.rotation_x = Math.sin(meshCanvas.time * 5.0)
+      meshCanvas.camera.rotation_x = 30
+      meshCanvas.camera.rotation_z = meshCanvas.time * 1000.0
+      meshCanvas.camera.translation[2] -= meshCanvas.growVelcity
 
       requestAnimationFrame draw
       return
@@ -50,13 +53,14 @@ MeshCanvas = do ->
 
       # shader
       meshCanvas.theMesh.shader = new Shader('mesh')
+      meshCanvas.theMesh.shader.bindUniform( 'projectionMatrix', 'mprojection' )
+      meshCanvas.theMesh.shader.bindUniform( 'viewMatrix', 'mview' )
+      meshCanvas.theMesh.shader.bindUniform( 'modelMatrix', 'mmodel' )
+      meshCanvas.theMesh.shader.bindUniform( 'time', 'wtime' )
 
-      # reference of original triangle shape
-      triangleVertex = [
-         -1.0, -.5, 0.0,
-         1.0, -.5, 0.0,
-         0.0, 1.0, 0.0
-      ]
+      # reference from original triangle shape
+      triangleVertex = Geometric.triangle(1)
+
       # gl mesh
       meshCanvas.theMesh.mesh = new TheMesh( meshCanvas.theMesh.shader )
       meshCanvas.theMesh.mesh.setUp( triangleVertex )
@@ -75,10 +79,11 @@ MeshCanvas = do ->
       # camera
       meshCanvas.camera = new Camera(
          meshCanvas.theMesh.shader,
-         [0,2,1.5],
-         [0,0,-0.2],
+         [0,-2,1.4],
+         [0,0,0],
          meshCanvas.aspect
       )
+      meshCanvas.camera.far_plane = 400
       return
 
    setUpRender = ->
@@ -96,7 +101,7 @@ MeshCanvas = do ->
       setInterval () ->
          meshCanvas.theMesh.mesh.addLevel()
          meshCanvas.theMesh.mesh.repostMeshData()
-      , 2000
+      , 800
 
       meshCanvas.ready = true
 

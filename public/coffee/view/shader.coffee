@@ -23,17 +23,10 @@ class Shader
       @vertexPositionAttribute = gl.getAttribLocation @program, 'vposition'
       throw ('Error: attribute not found') if @vertexPositionAttribute < 0
 
-      # TODO: generic bind and check
+   bindUniform: (name, id)->
       # bind uniform locations
-      @projectionMatrixUniform = gl.getUniformLocation @program, 'mprojection'
-      throw ('Could not bind uniform mprojection') unless @projectionMatrixUniform?
-
-      @viewMatrixUniform = gl.getUniformLocation @program, 'mview'
-      throw ('Could not bind uniform mview') unless @viewMatrixUniform?
-
-      @modelMatrixUniform = gl.getUniformLocation @program, 'mmodel'
-      throw ('Could not bind uniform mmodel') unless @modelMatrixUniform?
-
+      @[name+'Uniform'] = @gl.getUniformLocation @program, id
+      throw ('Could not bind uniform '+id) unless @[name+'Uniform']?
 
    loadFromScript: (id) ->
       gl = @gl
@@ -72,6 +65,12 @@ class Shader
          throw ('could not compile shader:' + gl.getShaderInfoLog object ) unless success
       else
          throw ('Not shader or program')
+
+   getUniform: (name) ->
+      @[name+'Uniform'] if @[name+'Uniform']?
+
+   setUniform: (name, type, value) ->
+      @gl[type]( @getUniform(name), false, value )
 
    use: ->
       @gl.useProgram @program
