@@ -39,6 +39,10 @@ class TheMesh extends Mesh
             l+(i+1)%3+3
          )
 
+   pushVertexPos: (id, x, y) ->
+      @levelVertex[3*id] = @triangleVertex[3*id] + y
+      @levelVertex[3*id+1] = @triangleVertex[3*id+1] + x
+
    updateVertexPos: ->
       gl = @gl
       l = @vertex.length - 3*3 # 3 float per vertex, 3 vertex

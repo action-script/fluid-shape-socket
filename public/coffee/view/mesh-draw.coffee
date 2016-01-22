@@ -10,38 +10,54 @@ MeshCanvas = do ->
       ready: false
 
    pushVertexPos = (data) ->
-      # TODO: include it on TheMesh class
       if meshCanvas.ready
+         meshCanvas.theMesh.mesh.pushVertexPos(
+            data.slaveId-1,
+            data.pos.x/meshCanvas.acReduction,
+            data.pos.y/meshCanvas.acReduction
+         )
+      ###
          meshCanvas.theMesh.mesh.levelVertex[3*(data.slaveId-1)] =
             meshCanvas.theMesh.mesh.triangleVertex[3*(data.slaveId-1)] +
                data.pos.y/meshCanvas.acReduction
          meshCanvas.theMesh.mesh.levelVertex[3*(data.slaveId-1)+1] =
             meshCanvas.theMesh.mesh.triangleVertex[3*(data.slaveId-1)+1] +
                data.pos.x/meshCanvas.acReduction
+      ###
 
    draw = ->
       # clear BG as black
       gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
-      meshCanvas.theMesh.shader.use()
-      meshCanvas.theMesh.shader.setUniform( 'time', 'uniform1f', meshCanvas.time )
-      # pass model to shaders
-      meshCanvas.theMesh.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.theMesh.modelMatrix )
-
+      meshCanvas.shader.use()
       meshCanvas.camera.use()
 
+      meshCanvas.shader.setUniform( 'time', 'uniform1f', meshCanvas.time )
+
+      # draw themesh
+      meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.theMesh.modelMatrix )
       meshCanvas.theMesh.mesh.draw()
+
+      # draw lid
+      meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.lid.modelMatrix )
+      meshCanvas.lid.mesh.draw()
+
       return
 
    updateTime = ->
       meshCanvas.time += 0.001
       # increase height of level
-      # TODO: Mesh function to update pos
       for i in [0..2]
          meshCanvas.theMesh.mesh.levelVertex[i*3+2] += meshCanvas.growVelcity
+         meshCanvas.lid.mesh.pushVertexPos(
+            i,
+            meshCanvas.theMesh.mesh.levelVertex[i*3+0],
+            meshCanvas.theMesh.mesh.levelVertex[i*3+1],
+            meshCanvas.theMesh.mesh.levelVertex[i*3+2]
+         )
 
-#      meshCanvas.camera.rotation_x = Math.sin(meshCanvas.time * 5.0)
-      meshCanvas.camera.rotation_x = 30
+      meshCanvas.camera.rotation_x = 10 +  Math.sin(meshCanvas.time * 10.0) * 35
+      #meshCanvas.camera.rotation_x = Math.min(Math.max(Math.sin(meshCanvas.time * 9.0), -0.5), 1)
       meshCanvas.camera.rotation_z = meshCanvas.time * 1000.0
       meshCanvas.camera.translation[2] -= meshCanvas.growVelcity
 
@@ -49,20 +65,20 @@ MeshCanvas = do ->
       return
 
    loadResources = ->
+      # - shader -
+      meshCanvas.shader = new Shader('mesh')
+      meshCanvas.shader.bindUniform( 'projectionMatrix', 'mprojection' )
+      meshCanvas.shader.bindUniform( 'viewMatrix', 'mview' )
+      meshCanvas.shader.bindUniform( 'modelMatrix', 'mmodel' )
+      meshCanvas.shader.bindUniform( 'time', 'wtime' )
+
+      # - themesh -
       meshCanvas.theMesh = {}
-
-      # shader
-      meshCanvas.theMesh.shader = new Shader('mesh')
-      meshCanvas.theMesh.shader.bindUniform( 'projectionMatrix', 'mprojection' )
-      meshCanvas.theMesh.shader.bindUniform( 'viewMatrix', 'mview' )
-      meshCanvas.theMesh.shader.bindUniform( 'modelMatrix', 'mmodel' )
-      meshCanvas.theMesh.shader.bindUniform( 'time', 'wtime' )
-
       # reference from original triangle shape
       triangleVertex = Geometric.triangle(1)
 
       # gl mesh
-      meshCanvas.theMesh.mesh = new TheMesh( meshCanvas.theMesh.shader )
+      meshCanvas.theMesh.mesh = new TheMesh( meshCanvas.shader )
       meshCanvas.theMesh.mesh.setUp( triangleVertex )
 
       # default position of the mesh
@@ -76,9 +92,32 @@ MeshCanvas = do ->
          meshCanvas.theMesh.modelMatrix,
          translation)
 
-      # camera
+      # - lid -
+      meshCanvas.lid = {}
+      # gl mesh
+      meshCanvas.lid.mesh = new Mesh( meshCanvas.shader )
+      meshCanvas.lid.mesh.initBuffer({
+         id: 0
+         data: triangleVertex
+         attribPointerId: meshCanvas.shader.vertexPositionAttribute
+         attribPointerSize: 3
+         usage: gl.DYNAMIC_DRAW
+      })
+
+      # default position of the mesh
+      meshCanvas.lid.modelMatrix = mat4.create()
+
+      mat4.identity(meshCanvas.lid.modelMatrix) # set to identity
+      translation = vec3.create()
+      vec3.set(translation, 0, 0, 0)
+      mat4.translate(
+         meshCanvas.lid.modelMatrix,
+         meshCanvas.lid.modelMatrix,
+         translation)
+
+      # - camera -
       meshCanvas.camera = new Camera(
-         meshCanvas.theMesh.shader,
+         meshCanvas.shader,
          [0,-2,1.4],
          [0,0,0],
          meshCanvas.aspect

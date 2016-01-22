@@ -15,7 +15,10 @@ class Mesh
          new Float32Array(buffer.data),   # data
          buffer.usage                     # usage. dynamic access to the vertex
 
-      # set up attrib pointer
+      gl.bindBuffer gl.ARRAY_BUFFER, null # unbinding
+
+    setUpAttribPointer: (buffer) ->
+      gl = @gl
       gl.enableVertexAttribArray buffer.attribPointerId # Attrib location id pointer
       gl.vertexAttribPointer(
          buffer.attribPointerId     # shader attrib pointer
@@ -25,8 +28,6 @@ class Mesh
          0,                         # stride, data between each position
          0                          # pointer, offset of first element
       )
-
-      gl.bindBuffer gl.ARRAY_BUFFER, null # unbinding
 
    initBufferIndex: (@index) ->
       gl = @gl
@@ -39,19 +40,29 @@ class Mesh
 
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, null # unbinding
 
+   pushVertexPos: (id, x, y, z) ->
+      gl = @gl
+      gl.bindBuffer gl.ARRAY_BUFFER, @buffers[0].vbo
+      l = 3*id
+      # buffer_type, array_offset, new_data
+      gl.bufferSubData gl.ARRAY_BUFFER,
+         l*4, # 3 poinrs x Vertex, 4 bytes x Float (float32 bits)
+         new Float32Array([x,y,z])
+
    draw: (type = @gl.TRIANGLES) ->
       gl = @gl
       @program.use()
       # bind all the vbo streams
       for buffer in @buffers
          gl.bindBuffer gl.ARRAY_BUFFER, buffer.vbo
+         @setUpAttribPointer(buffer)
 
       if @isIndexArrayMesh
          gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @ibo
          gl.drawElements type, @index.length, gl.UNSIGNED_SHORT, 0
          gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, null # unbinding
       else
-         gl.drawArrays type, 0, @buffers[0].data/@buffers[0].attribPointerSize
+         gl.drawArrays type, 0, @buffers[0].data.length/@buffers[0].attribPointerSize
 
       gl.bindBuffer gl.ARRAY_BUFFER, null # unbinding
       
