@@ -2,11 +2,12 @@ MeshCanvas = do ->
    gl = undefined
    meshCanvas =
       canvas: $ '<canvas/>', {'id':'meshCanvas'}
-      drawInterval: 40
+      drawInterval: 16
       darwLoopId: undefined
       time: 0.0
-      acReduction: 30.5
-      growVelcity: 0.007
+      acReduction: 40.5
+      growVelcity: 0.002
+      growSize: 0.25
       ready: false
 
    pushVertexPos = (data) ->
@@ -26,6 +27,7 @@ MeshCanvas = do ->
       ###
 
    draw = ->
+      meshCanvas.stats.begin()
       # clear BG as black
       gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
@@ -42,6 +44,7 @@ MeshCanvas = do ->
       meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.lid.modelMatrix )
       meshCanvas.lid.mesh.draw()
 
+      meshCanvas.stats.end()
       return
 
    updateTime = ->
@@ -56,9 +59,9 @@ MeshCanvas = do ->
             meshCanvas.theMesh.mesh.levelVertex[i*3+2]
          )
 
-      meshCanvas.camera.rotation_x = 10 +  Math.sin(meshCanvas.time * 10.0) * 35
+      meshCanvas.camera.rotation_x = 10 +  Math.sin(meshCanvas.time * 2.0) * 35
       #meshCanvas.camera.rotation_x = Math.min(Math.max(Math.sin(meshCanvas.time * 9.0), -0.5), 1)
-      meshCanvas.camera.rotation_z = meshCanvas.time * 1000.0
+      meshCanvas.camera.rotation_z = meshCanvas.time * 200.0
       meshCanvas.camera.translation[2] -= meshCanvas.growVelcity
 
       requestAnimationFrame draw
@@ -140,9 +143,19 @@ MeshCanvas = do ->
       setInterval () ->
          meshCanvas.theMesh.mesh.addLevel()
          meshCanvas.theMesh.mesh.repostMeshData()
-      , 800
+      , meshCanvas.drawInterval * (meshCanvas.growSize/meshCanvas.growVelcity)
 
       meshCanvas.ready = true
+
+   initStats = ->
+      meshCanvas.stats = new Stats()
+      meshCanvas.stats.setMode( 0 )
+
+      meshCanvas.stats.domElement.style.position = 'absolute'
+      meshCanvas.stats.domElement.style.left = '0px'
+      meshCanvas.stats.domElement.style.top = '0px'
+
+      document.body.appendChild( meshCanvas.stats.domElement )
 
    init = ->
       $('body').prepend(meshCanvas.canvas)
@@ -161,6 +174,7 @@ MeshCanvas = do ->
          return console.log 'Error loading sources\n', e
 
       # if the resources are loaded and running
+      initStats()
       setUpRender()
 
    return {
