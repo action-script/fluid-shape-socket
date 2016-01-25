@@ -96,8 +96,6 @@
    <script id="meshFragmentShader" type="x-shader/x-fragment">
    precision highp float;
    precision highp int;
-   highp vec4 top = vec4(1.0, 1.0, 1.0, 1.0);
-   highp vec4 bottom = vec4(0.0, 0.0, 0.0, 1.0);
    varying vec3 normal;
 
    struct directionalLight
@@ -109,9 +107,25 @@
    uniform directionalLight sunlight;
 
    void main() {
-      float fdiffuseintensity = max(-.1, dot(normalize(normal), -sunlight.vdirection));
+      float fdiffuseintensity = max(dot(normalize(normal), -sunlight.vdirection), 0.);
       gl_FragColor = vec4(1.,1.,1.,1)*vec4(sunlight.vcolor*(sunlight.fambientintensity+fdiffuseintensity), 1.);
    }
+   </script>
+   <script id="simpleVertexShader" type="x-shader/x-vertex">
+      attribute vec3 vposition;
+      uniform mat4 mprojection;
+      uniform mat4 mview;
+      uniform mat4 mmodel;
+      void main() {
+         gl_Position = mmodel * mview * mprojection * vec4(vposition, 1);
+      }
+   </script>
+   <script id="simpleFragmentShader" type="x-shader/x-fragment">
+      precision highp float;
+      precision highp int;
+      void main() {
+        gl_FragColor = vec4(1.,1.,1.,1.); 
+      }
    </script>
    <script src="components/socket.io-client/socket.io.js"></script>
    <script src="externals/jquery/dist/jquery.min.js"></script>

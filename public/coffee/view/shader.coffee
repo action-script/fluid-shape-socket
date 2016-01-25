@@ -18,12 +18,21 @@ class Shader
 
       # check if is linked
       @checkShaderError(@program, true)
+      gl.validateProgram @program
 
       # bind the attribute locations
       @vertexPositionAttribute = gl.getAttribLocation @program, 'vposition'
       throw ('Error: attribute "vertex" not found') if @vertexPositionAttribute < 0
       @vertexNormalAttribute = gl.getAttribLocation @program, 'vnormal'
       throw ('Error: attribute "normal" not found') if @vertexNormalAttribute < 0
+
+   destroy: ->
+      shaders = @gl.getAttachedShaders @program
+      @gl.detachShader @program, shaders[0]
+      @gl.detachShader @program, shaders[1]
+      @gl.deleteShader shaders[0]
+      @gl.deleteShader shaders[1]
+      @gl.deleteProgram @program
 
    bindUniform: (name, id)->
       # bind uniform locations

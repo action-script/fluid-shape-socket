@@ -79,10 +79,10 @@ class Camera
       )
       return @matrix.view
 
-   use: ->
+   use: (shaderProgram = @program) ->
       @calculateProjection()
       @calculateView()
-      @program.use()
+      shaderProgram.use()
 
       # calculate rotation
       mat4.rotate(
@@ -104,6 +104,6 @@ class Camera
          @matrix.view,
          @_translation)
 
-      @program.setUniform( 'viewMatrix', 'uniformMatrix4fv', @matrix.view, false )
+      shaderProgram.setUniform( 'viewMatrix', 'uniformMatrix4fv', @matrix.view, false )
 
-      @program.setUniform( 'projectionMatrix', 'uniformMatrix4fv', @matrix.projection, false )
+      shaderProgram.setUniform( 'projectionMatrix', 'uniformMatrix4fv', @matrix.projection, false )

@@ -28,8 +28,8 @@ MeshCanvas = do ->
 
       meshCanvas.shader.setUniform( 'time', 'uniform1f', meshCanvas.time )
       meshCanvas.shader.setUniform( 'lightColor', 'uniform3fv', [1.0, 0.9, 0.7] )
-      meshCanvas.shader.setUniform( 'lightDirection', 'uniform3fv', [0.0,-0.5,-1] )
-      meshCanvas.shader.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.2 )
+      meshCanvas.shader.setUniform( 'lightDirection', 'uniform3fv', [0.0,0, -1] )
+      meshCanvas.shader.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.5 )
 
       normalMatrix = mat4.create()
       # draw themesh
@@ -44,7 +44,7 @@ MeshCanvas = do ->
       mat4.invert(normalMatrix, meshCanvas.lid.modelMatrix * meshCanvas.camera.viewMatrix)
       mat4.transpose(normalMatrix,normalMatrix)
       meshCanvas.shader.setUniform( 'normalMatrix', 'uniformMatrix4fv', normalMatrix, false )
-      #meshCanvas.lid.mesh.draw()
+      meshCanvas.lid.mesh.draw()
 
       meshCanvas.stats.end()
       return
@@ -61,8 +61,13 @@ MeshCanvas = do ->
             meshCanvas.theMesh.mesh.levelVertex[i*3+2]
          )
 
-      meshCanvas.theMesh.mesh.levelVertex[0] = 0.5+Math.sin(meshCanvas.time*5.0)/2.0
-      meshCanvas.theMesh.mesh.levelVertex[3] = -0.3+Math.cos(meshCanvas.time*10.0)/2.0
+      # TODO: remove hack
+      ###
+      meshCanvas.theMesh.mesh.levelVertex[0] = 0.5 + Math.sin(meshCanvas.time * 5.0) / 2.0
+      meshCanvas.theMesh.mesh.levelVertex[1] = -0.7 + Math.cos(meshCanvas.time * 30.0) / 4.0
+      meshCanvas.theMesh.mesh.levelVertex[3] = -0.3 + Math.cos(meshCanvas.time * 10.0) / 2.0
+      meshCanvas.theMesh.mesh.levelVertex[7] = 0.5 + Math.sin(meshCanvas.time * 10.0) / 2.0
+      ###
             
       meshCanvas.camera.rotation_x = 10 +  Math.sin(meshCanvas.time * 2.0) * 35
       #meshCanvas.camera.rotation_x = Math.min(Math.max(Math.sin(meshCanvas.time * 9.0), -0.5), 1)
@@ -119,7 +124,7 @@ MeshCanvas = do ->
       meshCanvas.lid.mesh.initBuffer({
          id: 1
          data: [0,0,1,0,0,1,0,0,1]
-         attribPointerId: meshCanvas.shader.vetexNormalAttribute
+         attribPointerId: meshCanvas.shader.vertexNormalAttribute
          attribPointerSize: 3
          usage: gl.STATIC_DRAW
       })
@@ -143,6 +148,7 @@ MeshCanvas = do ->
          meshCanvas.aspect
       )
       meshCanvas.camera.far_plane = 400
+
       return
 
    setUpRender = ->
@@ -154,7 +160,9 @@ MeshCanvas = do ->
 
       # 3D z geometry
       gl.enable gl.DEPTH_TEST
-      # setShaderLight();
+      gl.enable gl.CULL_FACE
+      gl.cullFace gl.BACK
+#      gl.frontFace gl.CW
 
       meshCanvas.drawLoopId = setInterval(updateTime, meshCanvas.drawInterval)
       setInterval () ->

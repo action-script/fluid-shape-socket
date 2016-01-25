@@ -103,6 +103,7 @@ class TheMesh extends Mesh
 
       vec3.cross(n, u, v)
       vec3.normalize(n,n)
+      vec3.inverse(n,n)
       return Array.prototype.slice.call(n)
 
    pushVertexPos: (id, x, y) ->
@@ -118,15 +119,18 @@ class TheMesh extends Mesh
             b*4, # 4 bytes per Float (float32 bits)
             new Float32Array( @levelVertex.slice(i*3, i*3+3) )
       ).bind(this)
+      gl.bindBuffer gl.ARRAY_BUFFER, null # unbinding
 
    repostMeshData: ->
       gl = @gl
       @buffers[0].data = @vertex
       gl.bindBuffer gl.ARRAY_BUFFER, @buffers[0].vbo
       gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@buffers[0].data), @buffers[0].usage
+      gl.bindBuffer gl.ARRAY_BUFFER, null # unbinding
       @buffers[1].data = @normals
       gl.bindBuffer gl.ARRAY_BUFFER, @buffers[1].vbo
       gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@buffers[1].data), @buffers[1].usage
+      gl.bindBuffer gl.ARRAY_BUFFER, null # unbinding
 
    draw: () ->
       @updateVertexPos()

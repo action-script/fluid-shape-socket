@@ -10,8 +10,8 @@ $().ready ->
       config.socket.id = data.socketId
       socket.emit('pong', { clientType: 'view' })
       # TODO: remove hack
-      #LoadingCanvas.init()
-      MeshCanvas.init()
+      LoadingCanvas.init()
+      #MeshCanvas.init()
   
    socket.on 'new Slave', (data) ->
       console.log('I got a new slave', data)
