@@ -21,7 +21,9 @@ class Shader
 
       # bind the attribute locations
       @vertexPositionAttribute = gl.getAttribLocation @program, 'vposition'
-      throw ('Error: attribute not found') if @vertexPositionAttribute < 0
+      throw ('Error: attribute "vertex" not found') if @vertexPositionAttribute < 0
+      @vertexNormalAttribute = gl.getAttribLocation @program, 'vnormal'
+      throw ('Error: attribute "normal" not found') if @vertexNormalAttribute < 0
 
    bindUniform: (name, id)->
       # bind uniform locations
@@ -69,8 +71,9 @@ class Shader
    getUniform: (name) ->
       @[name+'Uniform'] if @[name+'Uniform']?
 
-   setUniform: (name, type, value) ->
-      @gl[type]( @getUniform(name), false, value )
+   setUniform: (name, type, value, transpose = null) ->
+      @gl[type]( @getUniform(name), false, value ) if transpose?
+      @gl[type]( @getUniform(name), value ) unless transpose?
 
    use: ->
       @gl.useProgram @program

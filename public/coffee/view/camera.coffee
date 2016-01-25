@@ -104,6 +104,6 @@ class Camera
          @matrix.view,
          @_translation)
 
-      @program.setUniform( 'viewMatrix', 'uniformMatrix4fv', @matrix.view )
+      @program.setUniform( 'viewMatrix', 'uniformMatrix4fv', @matrix.view, false )
 
-      @program.setUniform( 'projectionMatrix', 'uniformMatrix4fv', @matrix.projection )
+      @program.setUniform( 'projectionMatrix', 'uniformMatrix4fv', @matrix.projection, false )

@@ -3,14 +3,16 @@ class TheMesh extends Mesh
       super @program
       @vertex = []
       @levelVertex = []
-      @index = []
+#      @index = []
+      @normals = []
 
    setUp: (@triangleVertex) ->
       gl = @gl
       @levelVertex = @levelVertex.concat( @triangleVertex )
-      @vertex = @vertex.concat ( @triangleVertex )
-      @addLevel()
+      #@vertex = @vertex.concat ( @triangleVertex )
+      @addLevel(@levelVertex)
 
+      # vertex
       bufferData =
          id: 0
          data: @vertex
@@ -19,25 +21,89 @@ class TheMesh extends Mesh
          usage: gl.DYNAMIC_DRAW
 
       @initBuffer(bufferData)
-      @initBufferIndex(@index)
 
-   addLevel: ->
-      @vertex = @vertex.splice(0, @vertex.length-@levelVertex.length )
-      l = @vertex.length / 3
-      @vertex = @vertex.concat( @levelVertex, @levelVertex )
+      # normals
+      bufferData =
+         id: 1
+         data: @normals
+         attribPointerId: @program.vertexNormalAttribute
+         attribPointerSize: 3
+         usage: gl.STATIC_DRAW
+      @initBuffer(bufferData)
 
-      # calculate triangle index to draw elements
-      for v in [0..2]
-         i = v+l
-         @index.push(
-            i,
-            l+(i+1)%3,
-            i+3,
+   addLevel: (triangleVertex = null) ->
+      # update old vertex position
+      if @vertex.length >= 18*3
+         @getLastLevelVertex ((i, b) ->
+            @vertex.splice.apply( @vertex, [b,3].concat( @levelVertex.slice(i*3, i*3+3) ) )
+         ).bind(this)
+         l = @vertex.length - 18*3
+         for i in [0..2]
+            @calculateTriangleNormal(l+i*18)
+            @calculateTriangleNormal(l+i*18+9)
 
-            i+3,
-            l+(i+1)%3,
-            l+(i+1)%3+3
+      # duplicate level
+      lastLevelVertex = triangleVertex if triangleVertex?
+      lastLevelVertex = @getLevelAsTriangle() unless lastLevelVertex?
+      vertex = lastLevelVertex.concat(lastLevelVertex)
+
+      for i in [0..2]
+         # calculate triangle index to draw elements
+         a = i*3
+         b = ((i+1)%3)*3
+         c = (i+3)*3
+         d = c
+         e = b
+         f = b+9
+         @vertex = @vertex.concat(
+            vertex.slice(a, a+3),
+            vertex.slice(b, b+3),
+            vertex.slice(c, c+3),
+
+            vertex.slice(d, d+3),
+            vertex.slice(e, e+3),
+            vertex.slice(f, f+3)
          )
+         @normals.push(0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1) # add default normals
+
+   getLevelAsTriangle: (offset = 0) ->
+      offset++
+      offset *= 18
+      i = @vertex.length - (offset*3)
+      triangleLevel = [
+         # X                Y                   Z
+         @vertex[i+3*3], @vertex[i+3*3+1], @vertex[i+3*3+2]
+         @vertex[i+9*3], @vertex[i+9*3+1], @vertex[i+9*3+2]
+         @vertex[i+15*3], @vertex[i+15*3+1], @vertex[i+15*3+2]
+      ]
+
+   getLastLevelVertex: (callback) ->
+      l = @vertex.length - 18*3 # 18 vertex, 3 float points
+      for i in [0..2]
+         for j in [0,3,4]
+            b = l+((17+6*i+j)%18)*3
+            callback(i,b)
+
+   calculateTriangleNormal: (vertexIndex)->
+      l = vertexIndex
+      faceNormal = @calculateSurfaceNormal( @vertex.slice(l, l+9)  )
+      # replace level normals
+      @normals.splice.apply( @normals, [l,9].concat(faceNormal,faceNormal,faceNormal) )
+   
+   calculateSurfaceNormal: (triangle) ->
+      t = []
+      t[0] = triangle.slice(0,3)
+      t[1] = triangle.slice(3,6)
+      t[2] = triangle.slice(6,9)
+      u = new vec3.create()
+      v = new vec3.create()
+      n = new vec3.create()
+      vec3.subtract(u, t[0], t[1])
+      vec3.subtract(v, t[0], t[2])
+
+      vec3.cross(n, u, v)
+      vec3.normalize(n,n)
+      return Array.prototype.slice.call(n)
 
    pushVertexPos: (id, x, y) ->
       @levelVertex[3*id] = @triangleVertex[3*id] + y
@@ -45,27 +111,24 @@ class TheMesh extends Mesh
 
    updateVertexPos: ->
       gl = @gl
-      l = @vertex.length - 3*3 # 3 float per vertex, 3 vertex
       gl.bindBuffer gl.ARRAY_BUFFER, @buffers[0].vbo
-      # buffer_type, array_offset, new_data
-      gl.bufferSubData gl.ARRAY_BUFFER,
-         l*4, # 3 poinrs x Vertex, 4 bytes x Float (float32 bits)
-         new Float32Array(@levelVertex)
+      @getLastLevelVertex ((i, b) ->
+         # buffer_type, array_offset, new_data
+         gl.bufferSubData gl.ARRAY_BUFFER,
+            b*4, # 4 bytes per Float (float32 bits)
+            new Float32Array( @levelVertex.slice(i*3, i*3+3) )
+      ).bind(this)
 
    repostMeshData: ->
       gl = @gl
-      ###
-      for i,c in meshCanvas.theMesh.index
-         console.log c+' v:'+i+' ['+meshCanvas.theMesh.vertex[i+2]+', '+meshCanvas.theMesh.vertex[i+1]+', '+meshCanvas.theMesh.vertex[i+2]+']'
-      ###
       @buffers[0].data = @vertex
       gl.bindBuffer gl.ARRAY_BUFFER, @buffers[0].vbo
-      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@buffers[0].data), gl.DYNAMIC_DRAW
-
-      gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @ibo
-      gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(@index), gl.STATIC_DRAW
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@buffers[0].data), @buffers[0].usage
+      @buffers[1].data = @normals
+      gl.bindBuffer gl.ARRAY_BUFFER, @buffers[1].vbo
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@buffers[1].data), @buffers[1].usage
 
    draw: () ->
       @updateVertexPos()
       super
-      # super @gl.LINE_STRIP
+      #super @gl.LINE_LOOP

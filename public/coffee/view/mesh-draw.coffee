@@ -17,14 +17,6 @@ MeshCanvas = do ->
             data.pos.x/meshCanvas.acReduction,
             data.pos.y/meshCanvas.acReduction
          )
-      ###
-         meshCanvas.theMesh.mesh.levelVertex[3*(data.slaveId-1)] =
-            meshCanvas.theMesh.mesh.triangleVertex[3*(data.slaveId-1)] +
-               data.pos.y/meshCanvas.acReduction
-         meshCanvas.theMesh.mesh.levelVertex[3*(data.slaveId-1)+1] =
-            meshCanvas.theMesh.mesh.triangleVertex[3*(data.slaveId-1)+1] +
-               data.pos.x/meshCanvas.acReduction
-      ###
 
    draw = ->
       meshCanvas.stats.begin()
@@ -35,14 +27,24 @@ MeshCanvas = do ->
       meshCanvas.camera.use()
 
       meshCanvas.shader.setUniform( 'time', 'uniform1f', meshCanvas.time )
+      meshCanvas.shader.setUniform( 'lightColor', 'uniform3fv', [1.0, 0.9, 0.7] )
+      meshCanvas.shader.setUniform( 'lightDirection', 'uniform3fv', [0.0,-0.5,-1] )
+      meshCanvas.shader.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.2 )
 
+      normalMatrix = mat4.create()
       # draw themesh
-      meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.theMesh.modelMatrix )
+      meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.theMesh.modelMatrix, false )
+      mat4.invert(normalMatrix, meshCanvas.theMesh.modelMatrix * meshCanvas.camera.viewMatrix)
+      mat4.transpose(normalMatrix,normalMatrix)
+      meshCanvas.shader.setUniform( 'normalMatrix', 'uniformMatrix4fv', normalMatrix, false )
       meshCanvas.theMesh.mesh.draw()
 
       # draw lid
-      meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.lid.modelMatrix )
-      meshCanvas.lid.mesh.draw()
+      meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.lid.modelMatrix, false )
+      mat4.invert(normalMatrix, meshCanvas.lid.modelMatrix * meshCanvas.camera.viewMatrix)
+      mat4.transpose(normalMatrix,normalMatrix)
+      meshCanvas.shader.setUniform( 'normalMatrix', 'uniformMatrix4fv', normalMatrix, false )
+      #meshCanvas.lid.mesh.draw()
 
       meshCanvas.stats.end()
       return
@@ -59,6 +61,9 @@ MeshCanvas = do ->
             meshCanvas.theMesh.mesh.levelVertex[i*3+2]
          )
 
+      meshCanvas.theMesh.mesh.levelVertex[0] = 0.5+Math.sin(meshCanvas.time*5.0)/2.0
+      meshCanvas.theMesh.mesh.levelVertex[3] = -0.3+Math.cos(meshCanvas.time*10.0)/2.0
+            
       meshCanvas.camera.rotation_x = 10 +  Math.sin(meshCanvas.time * 2.0) * 35
       #meshCanvas.camera.rotation_x = Math.min(Math.max(Math.sin(meshCanvas.time * 9.0), -0.5), 1)
       meshCanvas.camera.rotation_z = meshCanvas.time * 200.0
@@ -73,7 +78,12 @@ MeshCanvas = do ->
       meshCanvas.shader.bindUniform( 'projectionMatrix', 'mprojection' )
       meshCanvas.shader.bindUniform( 'viewMatrix', 'mview' )
       meshCanvas.shader.bindUniform( 'modelMatrix', 'mmodel' )
+      meshCanvas.shader.bindUniform( 'normalMatrix', 'mnormalmatrix' )
       meshCanvas.shader.bindUniform( 'time', 'wtime' )
+      # light uniforms
+      meshCanvas.shader.bindUniform( 'lightColor', 'sunlight.vcolor' )
+      meshCanvas.shader.bindUniform( 'lightDirection', 'sunlight.vdirection' )
+      meshCanvas.shader.bindUniform( 'lightAmbientIntensity', 'sunlight.fambientintensity' )
 
       # - themesh -
       meshCanvas.theMesh = {}
@@ -105,6 +115,13 @@ MeshCanvas = do ->
          attribPointerId: meshCanvas.shader.vertexPositionAttribute
          attribPointerSize: 3
          usage: gl.DYNAMIC_DRAW
+      })
+      meshCanvas.lid.mesh.initBuffer({
+         id: 1
+         data: [0,0,1,0,0,1,0,0,1]
+         attribPointerId: meshCanvas.shader.vetexNormalAttribute
+         attribPointerSize: 3
+         usage: gl.STATIC_DRAW
       })
 
       # default position of the mesh
