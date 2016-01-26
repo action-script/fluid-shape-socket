@@ -72,7 +72,7 @@
    varying vec3 normal;
    const float timeexponent = 1.0;
    void main() {
-      vec4 position = mmodel * mview * vec4(vposition, 1);
+      vec4 position = mview * mmodel * vec4(vposition, 1);
    
       float distance2D = position.x * position.x + position.z * position.z;
    

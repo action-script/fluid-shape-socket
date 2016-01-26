@@ -18,7 +18,7 @@ $().ready ->
       config.status = 'vertex' if config.slaveId < 4
       config.status = 'camera' if config.slaveId == 4
 
-      setInterval(calculateCameraPos, 100) if config.status == 'camera'
+      setInterval(calculateCameraPos, 50) if config.status == 'camera'
 
       $('#' + config.status).show()
 
@@ -30,10 +30,9 @@ $().ready ->
       console.log('readyToDraw')
 
    calculateCameraPos = ->
-      cameraPos.x += acelerometer.x/3.0 if acelerometer.x > 2 or acelerometer.x < -2
-      cameraPos.y += acelerometer.y/2.0 if acelerometer.y > 3 or acelerometer.y < -3
-      cameraPos.x = 40 if cameraPos.x > 40
-      cameraPos.x = -22 if cameraPos.x < -22
+      cameraPos.x += acelerometer.x/6.0 if acelerometer.x > 2 or acelerometer.x < -2
+      cameraPos.y += acelerometer.y/6.0 if acelerometer.y > 3 or acelerometer.y < -3
+      cameraPos.x = Math.min( Math.max( cameraPos.x, -22), 55)
       move3D(cameraPos)
 
    pushAcPosData = (ac) ->
@@ -41,7 +40,6 @@ $().ready ->
       acelerometer.y = ac[1]
       move3D(acelerometer) if config.status == 'vertex'
 
-      #socket.emit("pushAcData", {"ac":myPos.ac, "user_id": user_id})
       if config.status?
          socket.emit 'pushPosition',
             'slaveId': window.config.slaveId,
@@ -64,7 +62,7 @@ $().ready ->
             'rotateY(' + 0 + 'deg) ' +
             'rotateZ(' + ( ac.y + 45) + 'deg)'
 
-   tilt = _.throttle(pushAcPosData, 1)
+   tilt = _.throttle(pushAcPosData, 10)
 
    # acelerometer sensor
    if window.DeviceOrientationEvent

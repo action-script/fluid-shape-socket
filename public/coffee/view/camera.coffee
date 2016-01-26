@@ -2,8 +2,7 @@ Function::property = (prop, desc) ->
    Object.defineProperty @prototype, prop, desc
 
 class Camera
-   constructor: (@program, @_position, @_center, @_aspect_ratio) ->
-      @gl = WebGL.getInstance()
+   constructor: (@_position, @_center, @_aspect_ratio) ->
       @matrix =
          view: mat4.create()
          projection: mat4.create()
@@ -50,6 +49,10 @@ class Camera
       get: -> @_z_rotation
       set: (@_z_rotation) ->
 
+   @property 'rotation_y',
+      get: -> @_y_rotation
+      set: (@_y_rotation) ->
+
    @property 'rotation_x',
       get: -> @_x_rotation
       set: (@_x_rotation) ->
@@ -70,40 +73,35 @@ class Camera
       return @matrix.projection
 
    calculateView: ->
+      calculated_position = []
+      calculated_position[1] =
+         @_position[1]*Math.cos(Math.radians @_x_rotation ) - @_position[2]*Math.sin(Math.radians @_x_rotation )
+      calculated_position[2] =
+         @_position[1]*Math.sin(Math.radians @_x_rotation) + @_position[2]*Math.cos(Math.radians @_x_rotation)
+         
+      calculated_position[0] =
+         @_position[0]*Math.cos(Math.radians @_z_rotation) - calculated_position[1]*Math.sin(Math.radians @_z_rotation)
+      calculated_position[1] =
+         @_position[0]*Math.sin(Math.radians @_z_rotation) + calculated_position[1]*Math.cos(Math.radians @_z_rotation)
+
+      calculated_position = vec3.add(
+         calculated_position,
+         calculated_position,
+         @_translation
+      )
       # camera view (eye, center, up)
       mat4.lookAt(
          @matrix.view,
-         @_position,
-         @_center,
+         calculated_position
+         vec3.add([],@_center,@_translation),
          @_up
       )
       return @matrix.view
 
-   use: (shaderProgram = @program) ->
+   use: (shaderProgram) ->
       @calculateProjection()
       @calculateView()
       shaderProgram.use()
-
-      # calculate rotation
-      mat4.rotate(
-         @matrix.view,
-         @matrix.view,
-         Math.radians(@_x_rotation),
-         @axis.x
-      )
-      mat4.rotate(
-         @matrix.view,
-         @matrix.view,
-         Math.radians(@_z_rotation),
-         @axis.z
-      )
-
-      # calculate translation
-      mat4.translate(
-         @matrix.view,
-         @matrix.view,
-         @_translation)
-
       shaderProgram.setUniform( 'viewMatrix', 'uniformMatrix4fv', @matrix.view, false )
 
       shaderProgram.setUniform( 'projectionMatrix', 'uniformMatrix4fv', @matrix.projection, false )

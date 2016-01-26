@@ -5,10 +5,14 @@ MeshCanvas = do ->
       drawInterval: 16
       darwLoopId: undefined
       time: 0.0
-      acReduction: 40.5
+      acReduction: 100.5
+      acReductionCamera: 20.0
       growVelcity: 0.002
       growSize: 0.25
       ready: false
+      cameraMove:
+         x: 0
+         y: 0
 
    pushVertexPos = (data) ->
       if meshCanvas.ready
@@ -18,17 +22,20 @@ MeshCanvas = do ->
             data.pos.y/meshCanvas.acReduction
          )
 
+   moveCamera = (data) ->
+      meshCanvas.cameraMove.y = data.pos.y/meshCanvas.acReductionCamera
+      meshCanvas.cameraMove.x = data.pos.x/meshCanvas.acReductionCamera
+   
    draw = ->
       meshCanvas.stats.begin()
       # clear BG as black
       gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
-      meshCanvas.shader.use()
-      meshCanvas.camera.use()
+      meshCanvas.camera.use( meshCanvas.shader )
 
       meshCanvas.shader.setUniform( 'time', 'uniform1f', meshCanvas.time )
       meshCanvas.shader.setUniform( 'lightColor', 'uniform3fv', [1.0, 0.9, 0.7] )
-      meshCanvas.shader.setUniform( 'lightDirection', 'uniform3fv', [0.0,0, -1] )
+      meshCanvas.shader.setUniform( 'lightDirection', 'uniform3fv', [0.0,0.3, -1] )
       meshCanvas.shader.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.5 )
 
       normalMatrix = mat4.create()
@@ -61,18 +68,13 @@ MeshCanvas = do ->
             meshCanvas.theMesh.mesh.levelVertex[i*3+2]
          )
 
-      # TODO: remove hack
-      ###
-      meshCanvas.theMesh.mesh.levelVertex[0] = 0.5 + Math.sin(meshCanvas.time * 5.0) / 2.0
-      meshCanvas.theMesh.mesh.levelVertex[1] = -0.7 + Math.cos(meshCanvas.time * 30.0) / 4.0
-      meshCanvas.theMesh.mesh.levelVertex[3] = -0.3 + Math.cos(meshCanvas.time * 10.0) / 2.0
-      meshCanvas.theMesh.mesh.levelVertex[7] = 0.5 + Math.sin(meshCanvas.time * 10.0) / 2.0
-      ###
-            
-      meshCanvas.camera.rotation_x = 10 +  Math.sin(meshCanvas.time * 2.0) * 35
-      #meshCanvas.camera.rotation_x = Math.min(Math.max(Math.sin(meshCanvas.time * 9.0), -0.5), 1)
-      meshCanvas.camera.rotation_z = meshCanvas.time * 200.0
-      meshCanvas.camera.translation[2] -= meshCanvas.growVelcity
+      # accumulate camera rotation
+      meshCanvas.camera.rotation_z -= meshCanvas.cameraMove.y
+      meshCanvas.camera.rotation_x -= meshCanvas.cameraMove.x
+      meshCanvas.camera.rotation_x =
+         Math.min( Math.max( meshCanvas.camera.rotation_x, -35), 90)
+
+      meshCanvas.camera.translation[2] += meshCanvas.growVelcity
 
       requestAnimationFrame draw
       return
@@ -123,7 +125,7 @@ MeshCanvas = do ->
       })
       meshCanvas.lid.mesh.initBuffer({
          id: 1
-         data: [0,0,1,0,0,1,0,0,1]
+         data: [0,0.5,0.3,0,0.5,0.3,0,0.5,0.3]
          attribPointerId: meshCanvas.shader.vertexNormalAttribute
          attribPointerSize: 3
          usage: gl.STATIC_DRAW
@@ -142,7 +144,6 @@ MeshCanvas = do ->
 
       # - camera -
       meshCanvas.camera = new Camera(
-         meshCanvas.shader,
          [0,-2,1.4],
          [0,0,0],
          meshCanvas.aspect
@@ -203,6 +204,7 @@ MeshCanvas = do ->
       setUpRender()
 
    return {
-      init,
+      init
       pushVertexPos
+      moveCamera
    }

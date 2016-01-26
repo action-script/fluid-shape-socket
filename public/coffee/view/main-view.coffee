@@ -9,9 +9,7 @@ $().ready ->
       console.log('ping', data)
       config.socket.id = data.socketId
       socket.emit('pong', { clientType: 'view' })
-      # TODO: remove hack
       LoadingCanvas.init()
-      #MeshCanvas.init()
   
    socket.on 'new Slave', (data) ->
       console.log('I got a new slave', data)
@@ -29,3 +27,4 @@ $().ready ->
    socket.on 'newPosition', (data) ->
       console.log('new position')
       MeshCanvas.pushVertexPos(data) if config.drawing && data.slaveId < 4
+      MeshCanvas.moveCamera(data) if config.drawing && data.slaveId == 4
