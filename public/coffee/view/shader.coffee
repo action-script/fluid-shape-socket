@@ -24,7 +24,7 @@ class Shader
       @vertexPositionAttribute = gl.getAttribLocation @program, 'vposition'
       throw ('Error: attribute "vertex" not found') if @vertexPositionAttribute < 0
       @vertexNormalAttribute = gl.getAttribLocation @program, 'vnormal'
-      throw ('Error: attribute "normal" not found') if @vertexNormalAttribute < 0
+#      throw ('Error: attribute "normal" not found') if @vertexNormalAttribute < 0
 
    destroy: ->
       shaders = @gl.getAttachedShaders @program

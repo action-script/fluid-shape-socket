@@ -88,6 +88,7 @@ class TheMesh extends Mesh
       l = vertexIndex
       faceNormal = @calculateSurfaceNormal( @vertex.slice(l, l+9)  )
       # replace level normals
+      # TODO: if normal < defaul apply random
       @normals.splice.apply( @normals, [l,9].concat(faceNormal,faceNormal,faceNormal) )
    
    calculateSurfaceNormal: (triangle) ->
@@ -103,7 +104,6 @@ class TheMesh extends Mesh
 
       vec3.cross(n, u, v)
       vec3.normalize(n,n)
-      vec3.inverse(n,n)
       return Array.prototype.slice.call(n)
 
    pushVertexPos: (id, x, y) ->

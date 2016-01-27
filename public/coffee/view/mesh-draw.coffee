@@ -53,6 +53,13 @@ MeshCanvas = do ->
       meshCanvas.shader.setUniform( 'normalMatrix', 'uniformMatrix4fv', normalMatrix, false )
       meshCanvas.lid.mesh.draw()
 
+      # normals visor
+      meshCanvas.camera.use( meshCanvas.shaderSimple )
+
+      meshCanvas.shaderSimple.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.normalsVisor.modelMatrix, false )
+
+      meshCanvas.normalsVisor.mesh.draw()
+
       meshCanvas.stats.end()
       return
 
@@ -67,7 +74,6 @@ MeshCanvas = do ->
             meshCanvas.theMesh.mesh.levelVertex[i*3+1],
             meshCanvas.theMesh.mesh.levelVertex[i*3+2]
          )
-
       # accumulate camera rotation
       meshCanvas.camera.rotation_z -= meshCanvas.cameraMove.y
       meshCanvas.camera.rotation_x -= meshCanvas.cameraMove.x
@@ -125,7 +131,7 @@ MeshCanvas = do ->
       })
       meshCanvas.lid.mesh.initBuffer({
          id: 1
-         data: [0,0.5,0.3,0,0.5,0.3,0,0.5,0.3]
+         data: [0,0,1,0,0,1,0,0,1]
          attribPointerId: meshCanvas.shader.vertexNormalAttribute
          attribPointerSize: 3
          usage: gl.STATIC_DRAW
@@ -150,6 +156,26 @@ MeshCanvas = do ->
       )
       meshCanvas.camera.far_plane = 400
 
+      # normals visor
+      meshCanvas.shaderSimple = new Shader('simple')
+      meshCanvas.shaderSimple.bindUniform( 'projectionMatrix', 'mprojection' )
+      meshCanvas.shaderSimple.bindUniform( 'viewMatrix', 'mview' )
+      meshCanvas.shaderSimple.bindUniform( 'modelMatrix', 'mmodel' )
+
+      meshCanvas.normalsVisor = {}
+      meshCanvas.normalsVisor.mesh = new NormalsVisor(meshCanvas.shaderSimple, meshCanvas.theMesh.mesh)
+
+      meshCanvas.normalsVisor.modelMatrix = mat4.create()
+
+      mat4.identity(meshCanvas.normalsVisor.modelMatrix) # set to identity
+      translation = vec3.create()
+      vec3.set(translation, 0, 0, 0)
+      mat4.translate(
+         meshCanvas.normalsVisor.modelMatrix,
+         meshCanvas.normalsVisor.modelMatrix,
+         translation)
+
+ 
       return
 
    setUpRender = ->

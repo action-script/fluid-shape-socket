@@ -117,14 +117,14 @@
       uniform mat4 mview;
       uniform mat4 mmodel;
       void main() {
-         gl_Position = mmodel * mview * mprojection * vec4(vposition, 1);
+         gl_Position = mprojection * (mmodel * mview) * vec4(vposition, 1);
       }
    </script>
    <script id="simpleFragmentShader" type="x-shader/x-fragment">
       precision highp float;
       precision highp int;
       void main() {
-        gl_FragColor = vec4(1.,1.,1.,1.); 
+         gl_FragColor = vec4(0.1,0.1,1.0,1.0);
       }
    </script>
    <script src="components/socket.io-client/socket.io.js"></script>
