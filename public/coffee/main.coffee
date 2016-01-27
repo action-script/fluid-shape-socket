@@ -1,11 +1,14 @@
 $().ready ->
-   window.config.socket.id = undefined
+   window.config = {}
+   window.config.socket = {}
    window.config.status = undefined
    cameraPos = {x: 0, y:0}
    acelerometer = {x: 0, y:0}
 
    # socket app
-   socket = io(config.server.ip+':'+config.server.port)
+   socket = io({
+      reconnection: false
+   })
    socket.on 'ping', (data) ->
       console.log('ping', data)
       window.config.socket.id = data.socketId

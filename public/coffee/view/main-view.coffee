@@ -1,10 +1,11 @@
 $().ready ->
-   window.config.socket.id = undefined
+   window.config = {}
+   window.config.socket = {}
    window.config.drawing = false
    slaves = []
  
    # socket app
-   socket = io(config.server.ip+':'+config.server.port)
+   socket = io()
    socket.on 'ping', (data) ->
       console.log('ping', data)
       config.socket.id = data.socketId

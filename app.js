@@ -1,10 +1,8 @@
 var express = require('express')
 var app = express()
 
-var config = require('./global_config')
-
 // server
-var server = app.listen(config.server.port, function() {
+var server = app.listen('3000', function() {
    var host = server.address().address
    var port = server.address().port
    console.log('App listening at http://%s:%s', host, port)
@@ -21,12 +19,13 @@ app.get('/view', function(req, res) {
 app.get('/*.(js|css|png|jpg)', function(req, res) {
    res.sendFile(__dirname + "/public" + req.url)
 })
-
+/*
 app.get('/config', function(req, res) {
    res.setHeader('content-type', 'text/javascript')
    var jsFile = 'window.config = ' + JSON.stringify(config)
    res.send(jsFile)
 })
+*/
 
 
 // socket
@@ -42,7 +41,7 @@ io.on('connection', function (socket) {
       console.log('pong', data)
       if (data.clientType == 'slave') {
          console.log('slave ' + (numberOfSlaves + 1))
-         if (numberOfSlaves >= config.socket.maxConnections || viewSocket == null) {
+         if (numberOfSlaves >= 4 || viewSocket == null) {
             socket.emit('blocked') 
             socket.disconnect()
          }
@@ -72,4 +71,18 @@ io.on('connection', function (socket) {
       io.sockets.connected[viewSocket].emit('newPosition', data)
    })
 
+   socket.on('disconnect', function() {
+      console.log('disconnected', socket.id)
+
+      if (viewSocket == socket.id) {
+         console.log('disconnecting all slaves')
+         io.sockets.sockets.forEach(function(s) {
+            s.disconnect(true)
+         })
+         numberOfSlaves = 0
+      }
+   })
+
 })
+
+
