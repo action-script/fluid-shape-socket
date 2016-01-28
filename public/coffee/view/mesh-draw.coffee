@@ -54,13 +54,14 @@ MeshCanvas = do ->
       meshCanvas.lid.mesh.draw()
 
       # normals visor
-      meshCanvas.camera.use( meshCanvas.shaderSimple )
+      if meshCanvas.normalsVisor.show
+         meshCanvas.camera.use( meshCanvas.shaderSimple )
 
-      meshCanvas.shaderSimple.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.normalsVisor.modelMatrix, false )
+         meshCanvas.shaderSimple.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.normalsVisor.modelMatrix, false )
 
-      meshCanvas.normalsVisor.mesh.draw()
+         meshCanvas.normalsVisor.mesh.draw()
 
-      meshCanvas.stats.end()
+         meshCanvas.stats.end()
       return
 
    updateTime = ->
@@ -175,6 +176,7 @@ MeshCanvas = do ->
          meshCanvas.normalsVisor.modelMatrix,
          translation)
 
+      meshCanvas.normalsVisor.show = false
  
       return
 
