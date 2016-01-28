@@ -48,7 +48,7 @@ LoadingCanvas = do ->
          clearInterval(id) if (progress == 1)
       , loadingCanvas.drawInterval
 
-   draw = (canvas, ctx) ->
+   drawbackGround = (canvas, ctx) ->
       # BG gradient
       grd = ctx.createRadialGradient(
          canvas.width/2,
@@ -68,7 +68,8 @@ LoadingCanvas = do ->
       ctx.fillStyle = grd
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      # draw main circre
+   drawMainCircle = (canvas, ctx) ->
+      # draw main circre    
       ctx.lineWidth = 1
       ctx.strokeStyle = loadingCanvas.elements.mainCircle.color
       ctx.beginPath()
@@ -79,7 +80,8 @@ LoadingCanvas = do ->
          0,2*Math.PI)
       ctx.stroke()
       ctx.closePath()
-
+  
+   drawNodes = (canvas, ctx) ->
       # draw nodes
       for i in [0..2]
          if loadingCanvas.elements.nodes[i].connected
@@ -106,7 +108,7 @@ LoadingCanvas = do ->
          loadingCanvas.elements.nodes[i].y += -.5 * noise.simplex2(loadingCanvas.elements.nodes[i].noise, 300) * loadingCanvas.elements.nodes[i].noiseExponent
          loadingCanvas.elements.nodes[i].noise += loadingCanvas.elements.nodes[i].noiseFactor
 
-
+   drawLines = (canvas, ctx) ->
       # draw lines
       ctx.lineWidth = 1
       ctx.strokeStyle = loadingCanvas.elements.node.deactivatedColor
@@ -118,7 +120,10 @@ LoadingCanvas = do ->
          console.log()
          ctx.beginPath()
          ctx.moveTo(oldpos.x,oldpos.y)
-         ctx.lineTo(loadingCanvas.elements.nodes[i].x,loadingCanvas.elements.nodes[i].y)
+         ctx.lineTo(
+            loadingCanvas.elements.nodes[i].x,
+            loadingCanvas.elements.nodes[i].y
+         )
          ctx.stroke()
          ctx.closePath()
          ctx.setLineDash([])
@@ -134,6 +139,7 @@ LoadingCanvas = do ->
       ctx.closePath()
       ctx.setLineDash([])
 
+   drawMask = (canvas, ctx) ->
       # gradient mask
       grd = ctx.createRadialGradient(
          canvas.width/2,
@@ -147,16 +153,19 @@ LoadingCanvas = do ->
       grd.addColorStop(1, '#000000')
       ctx.fillStyle = grd
       ctx.fillRect(0, 0, canvas.width, canvas.height)
+ 
+   draw = (canvas, ctx) ->
+      drawbackGround(canvas, ctx)
 
-   init = ->
-      $('body').prepend(loadingCanvas.canvas)
+      drawMainCircle(canvas, ctx)
 
-      canvas = loadingCanvas.canvas[0]
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      drawNodes(canvas, ctx)
 
-      ctx = canvas.getContext("2d")
+      drawLines(canvas, ctx)
 
+      drawMask(canvas, ctx)
+
+   initGeometries = (canvas) ->
       loadingCanvas.elements.mainCircle.x = canvas.width/2
       loadingCanvas.elements.mainCircle.y = canvas.height/2
       loadingCanvas.elements.mainCircle.r = canvas.height/1.7
@@ -169,12 +178,22 @@ LoadingCanvas = do ->
          loadingCanvas.elements.nodes[i].connected = false
          loadingCanvas.elements.nodes[i].color = loadingCanvas.elements.node.deactivatedColor
 
+   init = ->
+      $('body').prepend(loadingCanvas.canvas)
+
+      canvas = loadingCanvas.canvas[0]
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      ctx = canvas.getContext("2d")
+
+      initGeometries(canvas)
+      displayIndicator()
+
       drawLoopLoadingCanvas = setInterval () ->
          ctx.clearRect(0,0,canvas.width,canvas.height)
          draw(canvas, ctx)
       , loadingCanvas.drawInterval
-
-      displayIndicator()
 
    stop = ->
       clearInterval(drawLoopLoadingCanvas)
