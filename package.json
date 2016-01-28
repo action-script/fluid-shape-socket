@@ -1,13 +1,15 @@
 {
   "name": "fluid-shape-socket",
-  "version": "0.0.0",
-  "description": "",
+  "version": "0.0.22",
+  "description": "webGL and node-sockets prototype",
+  "author": "Nuño de la Serna",
+  "homepage": "http://action-io.tumblr.com",
+  "license": "MIT",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app",
+    "install": "bower install && grunt",
   },
-  "author": "Nuño de la Serna",
-  "license": "BSD-2-Clause",
   "dependencies": {
     "express": "~4.12.3",
     "socket.io": "~1.3.5"
