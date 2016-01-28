@@ -98,10 +98,4 @@ class Camera
       )
       return @matrix.view
 
-   use: (shaderProgram) ->
-      @calculateProjection()
-      @calculateView()
-      shaderProgram.use()
-      shaderProgram.setUniform( 'viewMatrix', 'uniformMatrix4fv', @matrix.view, false )
 
-      shaderProgram.setUniform( 'projectionMatrix', 'uniformMatrix4fv', @matrix.projection, false )
