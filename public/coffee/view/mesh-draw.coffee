@@ -25,43 +25,51 @@ MeshCanvas = do ->
    moveCamera = (data) ->
       meshCanvas.cameraMove.y = data.pos.y/meshCanvas.acReductionCamera
       meshCanvas.cameraMove.x = data.pos.x/meshCanvas.acReductionCamera
-   
+
+   drawAsset = (asset) ->
+      asset.program.useCamera(meshCanvas.camera)
+      asset.program.setUniform( 'modelMatrix', 'uniformMatrix4fv',
+         asset.modelMatrix, false )
+
+      if asset.program.normalMatrixUniform?
+         normalMatrix = mat4.invert( [],
+            mat4.multiply( [],
+               asset.modelMatrix,
+               meshCanvas.camera.matrix.view
+            )
+         )
+         mat4.transpose(normalMatrix,normalMatrix)
+
+         normalMatrix = asset.modelMatrix
+         asset.program.setUniform( 'normalMatrix', 'uniformMatrix4fv',
+            normalMatrix, false )
+
+      asset.mesh.draw()
+
+   drawLight = (program) ->
+      program.setUniform( 'lightColor', 'uniform3fv', [1.0, 0.99, 0.8] )
+      program.setUniform( 'lightDirection', 'uniform3fv', [0.0,0, -1] )
+      program.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.333 )
+
    draw = ->
       meshCanvas.stats.begin()
       # clear BG as black
       gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
-      meshCanvas.camera.use( meshCanvas.shader )
+      meshCanvas.mainShader.use()
+      meshCanvas.mainShader.setUniform( 'time', 'uniform1f', meshCanvas.time )
+      drawLight( meshCanvas.mainShader )
 
-      meshCanvas.shader.setUniform( 'time', 'uniform1f', meshCanvas.time )
-      meshCanvas.shader.setUniform( 'lightColor', 'uniform3fv', [1.0, 0.9, 0.7] )
-      meshCanvas.shader.setUniform( 'lightDirection', 'uniform3fv', [0.0,0.3, -1] )
-      meshCanvas.shader.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.5 )
-
-      normalMatrix = mat4.create()
-      # draw themesh
-      meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.theMesh.modelMatrix, false )
-      mat4.invert(normalMatrix, meshCanvas.theMesh.modelMatrix * meshCanvas.camera.viewMatrix)
-      mat4.transpose(normalMatrix,normalMatrix)
-      meshCanvas.shader.setUniform( 'normalMatrix', 'uniformMatrix4fv', normalMatrix, false )
-      meshCanvas.theMesh.mesh.draw()
-
-      # draw lid
-      meshCanvas.shader.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.lid.modelMatrix, false )
-      mat4.invert(normalMatrix, meshCanvas.lid.modelMatrix * meshCanvas.camera.viewMatrix)
-      mat4.transpose(normalMatrix,normalMatrix)
-      meshCanvas.shader.setUniform( 'normalMatrix', 'uniformMatrix4fv', normalMatrix, false )
-      meshCanvas.lid.mesh.draw()
+      drawAsset( meshCanvas.theMesh )
+      drawAsset( meshCanvas.lid )
 
       # normals visor
       if meshCanvas.normalsVisor.show
+         meshCanvas.normalsVisor.program.use()
+         drawAsset( meshCanvas.normalsVisor )
          meshCanvas.camera.use( meshCanvas.shaderSimple )
 
-         meshCanvas.shaderSimple.setUniform( 'modelMatrix', 'uniformMatrix4fv', meshCanvas.normalsVisor.modelMatrix, false )
-
-         meshCanvas.normalsVisor.mesh.draw()
-
-         meshCanvas.stats.end()
+      meshCanvas.stats.end()
       return
 
    updateTime = ->
@@ -88,24 +96,26 @@ MeshCanvas = do ->
 
    loadResources = ->
       # - shader -
-      meshCanvas.shader = new Shader('mesh')
-      meshCanvas.shader.bindUniform( 'projectionMatrix', 'mprojection' )
-      meshCanvas.shader.bindUniform( 'viewMatrix', 'mview' )
-      meshCanvas.shader.bindUniform( 'modelMatrix', 'mmodel' )
-      meshCanvas.shader.bindUniform( 'normalMatrix', 'mnormalmatrix' )
-      meshCanvas.shader.bindUniform( 'time', 'wtime' )
+      meshCanvas.mainShader = new Shader('mesh')
+      meshCanvas.mainShader.bindUniform( 'projectionMatrix', 'mprojection' )
+      meshCanvas.mainShader.bindUniform( 'viewMatrix', 'mview' )
+      meshCanvas.mainShader.bindUniform( 'modelMatrix', 'mmodel' )
+      meshCanvas.mainShader.bindUniform( 'normalMatrix', 'mnormalmatrix' )
+      meshCanvas.mainShader.bindUniform( 'time', 'wtime' )
       # light uniforms
-      meshCanvas.shader.bindUniform( 'lightColor', 'sunlight.vcolor' )
-      meshCanvas.shader.bindUniform( 'lightDirection', 'sunlight.vdirection' )
-      meshCanvas.shader.bindUniform( 'lightAmbientIntensity', 'sunlight.fambientintensity' )
+      meshCanvas.mainShader.bindUniform( 'lightColor', 'sunlight.vcolor' )
+      meshCanvas.mainShader.bindUniform( 'lightDirection', 'sunlight.vdirection' )
+      meshCanvas.mainShader.bindUniform( 'lightAmbientIntensity', 'sunlight.fambientintensity' )
 
       # - themesh -
       meshCanvas.theMesh = {}
+      meshCanvas.theMesh.program = meshCanvas.mainShader
+
       # reference from original triangle shape
       triangleVertex = Geometric.triangle(1)
 
       # gl mesh
-      meshCanvas.theMesh.mesh = new TheMesh( meshCanvas.shader )
+      meshCanvas.theMesh.mesh = new TheMesh( meshCanvas.mainShader )
       meshCanvas.theMesh.mesh.setUp( triangleVertex )
 
       # default position of the mesh
@@ -121,19 +131,21 @@ MeshCanvas = do ->
 
       # - lid -
       meshCanvas.lid = {}
+      meshCanvas.lid.program = meshCanvas.mainShader
+
       # gl mesh
-      meshCanvas.lid.mesh = new Mesh( meshCanvas.shader )
+      meshCanvas.lid.mesh = new Mesh()
       meshCanvas.lid.mesh.initBuffer({
          id: 0
          data: triangleVertex
-         attribPointerId: meshCanvas.shader.vertexPositionAttribute
+         attribPointerId: meshCanvas.mainShader.vertexPositionAttribute
          attribPointerSize: 3
          usage: gl.DYNAMIC_DRAW
       })
       meshCanvas.lid.mesh.initBuffer({
          id: 1
          data: [0,0,1,0,0,1,0,0,1]
-         attribPointerId: meshCanvas.shader.vertexNormalAttribute
+         attribPointerId: meshCanvas.mainShader.vertexNormalAttribute
          attribPointerSize: 3
          usage: gl.STATIC_DRAW
       })
@@ -158,13 +170,15 @@ MeshCanvas = do ->
       meshCanvas.camera.far_plane = 400
 
       # normals visor
-      meshCanvas.shaderSimple = new Shader('simple')
-      meshCanvas.shaderSimple.bindUniform( 'projectionMatrix', 'mprojection' )
-      meshCanvas.shaderSimple.bindUniform( 'viewMatrix', 'mview' )
-      meshCanvas.shaderSimple.bindUniform( 'modelMatrix', 'mmodel' )
+      meshCanvas.simpleShader = new Shader('simple')
+      meshCanvas.simpleShader.bindUniform( 'projectionMatrix', 'mprojection' )
+      meshCanvas.simpleShader.bindUniform( 'viewMatrix', 'mview' )
+      meshCanvas.simpleShader.bindUniform( 'modelMatrix', 'mmodel' )
 
       meshCanvas.normalsVisor = {}
-      meshCanvas.normalsVisor.mesh = new NormalsVisor(meshCanvas.shaderSimple, meshCanvas.theMesh.mesh)
+      meshCanvas.normalsVisor.program = meshCanvas.simpleShader
+
+      meshCanvas.normalsVisor.mesh = new NormalsVisor(meshCanvas.simpleShader, meshCanvas.theMesh.mesh)
 
       meshCanvas.normalsVisor.modelMatrix = mat4.create()
 

@@ -1,6 +1,6 @@
 class TheMesh extends Mesh
    constructor: (@program) ->
-      super @program
+      super
       @vertex = []
       @levelVertex = []
 #      @index = []

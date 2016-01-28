@@ -1,5 +1,5 @@
 class Mesh
-   constructor: (@program) ->
+   constructor: () ->
       @gl = WebGL.getInstance()
       @isIndexArrayMesh = false
       @buffers = []
@@ -51,7 +51,6 @@ class Mesh
 
    draw: (type = @gl.TRIANGLES) ->
       gl = @gl
-      @program.use()
       # bind all the vbo streams
       for buffer in @buffers
          gl.bindBuffer gl.ARRAY_BUFFER, buffer.vbo

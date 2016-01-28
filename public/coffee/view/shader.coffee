@@ -84,5 +84,15 @@ class Shader
       @gl[type]( @getUniform(name), false, value ) if transpose?
       @gl[type]( @getUniform(name), value ) unless transpose?
 
+   useCamera: (camera) ->
+      camera.calculateProjection()
+      camera.calculateView()
+      @setUniform( 'viewMatrix',
+         'uniformMatrix4fv',
+         camera.matrix.view, false )
+      @setUniform( 'projectionMatrix',
+         'uniformMatrix4fv',
+         camera.matrix.projection, false )
+
    use: ->
       @gl.useProgram @program
