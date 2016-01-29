@@ -33,6 +33,7 @@ class TheMesh extends Mesh
 
    addLevel: (triangleVertex = null) ->
       # update old vertex position
+      ###
       if @vertex.length >= 18*3
          @getLastLevelVertex ((i, b) ->
             @vertex.splice.apply( @vertex, [b,3].concat( @levelVertex.slice(i*3, i*3+3) ) )
@@ -41,6 +42,7 @@ class TheMesh extends Mesh
          for i in [0..2]
             @calculateTriangleNormal(l+i*18)
             @calculateTriangleNormal(l+i*18+9)
+      ###
 
       # duplicate level
       lastLevelVertex = triangleVertex if triangleVertex?
@@ -64,7 +66,7 @@ class TheMesh extends Mesh
             vertex.slice(e, e+3),
             vertex.slice(f, f+3)
          )
-         @normals.push(0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1) # add default normals
+         @normals.push(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0) # add default normals
 
    getLevelAsTriangle: (offset = 0) ->
       offset++
@@ -112,13 +114,33 @@ class TheMesh extends Mesh
 
    updateVertexPos: ->
       gl = @gl
-      gl.bindBuffer gl.ARRAY_BUFFER, @buffers[0].vbo
+ 
+      # update local vertex
       @getLastLevelVertex ((i, b) ->
-         # buffer_type, array_offset, new_data
-         gl.bufferSubData gl.ARRAY_BUFFER,
-            b*4, # 4 bytes per Float (float32 bits)
-            new Float32Array( @levelVertex.slice(i*3, i*3+3) )
+         @vertex.splice.apply(
+            @vertex, [b,3].concat( @levelVertex.slice(i*3, i*3+3) )
+         )
       ).bind(this)
+
+      # calculte last level normals
+      l = @vertex.length - 18*3
+      for i in [0..2]
+         @calculateTriangleNormal(l+i*18)
+         @calculateTriangleNormal(l+i*18+9)
+
+      # update buffer vertex
+      gl.bindBuffer gl.ARRAY_BUFFER, @buffers[0].vbo
+      # buffer_type, array_offset, new_data
+      gl.bufferSubData gl.ARRAY_BUFFER,
+         l*4, # 4 bytes per Float (float32 bits)
+         new Float32Array( @vertex.slice(l) )
+      gl.bindBuffer gl.ARRAY_BUFFER, null # unbinding
+
+      # update buffer normals
+      gl.bindBuffer gl.ARRAY_BUFFER, @buffers[1].vbo
+      gl.bufferSubData gl.ARRAY_BUFFER,
+         l*4, # 4 bytes per Float (float32 bits)
+         new Float32Array( @normals.slice(l) )
       gl.bindBuffer gl.ARRAY_BUFFER, null # unbinding
 
    repostMeshData: ->

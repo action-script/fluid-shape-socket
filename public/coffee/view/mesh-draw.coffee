@@ -67,7 +67,6 @@ MeshCanvas = do ->
       if meshCanvas.normalsVisor.show
          meshCanvas.normalsVisor.program.use()
          drawAsset( meshCanvas.normalsVisor )
-         meshCanvas.camera.use( meshCanvas.shaderSimple )
 
       meshCanvas.stats.end()
       return
@@ -190,7 +189,7 @@ MeshCanvas = do ->
          meshCanvas.normalsVisor.modelMatrix,
          translation)
 
-      meshCanvas.normalsVisor.show = false
+      meshCanvas.normalsVisor.show = true
  
       return
 
