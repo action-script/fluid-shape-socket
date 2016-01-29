@@ -3,13 +3,11 @@ class TheMesh extends Mesh
       super
       @vertex = []
       @levelVertex = []
-#      @index = []
       @normals = []
 
    setUp: (@triangleVertex) ->
       gl = @gl
       @levelVertex = @levelVertex.concat( @triangleVertex )
-      #@vertex = @vertex.concat ( @triangleVertex )
       @addLevel(@levelVertex)
 
       # vertex
@@ -32,18 +30,6 @@ class TheMesh extends Mesh
       @initBuffer(bufferData)
 
    addLevel: (triangleVertex = null) ->
-      # update old vertex position
-      ###
-      if @vertex.length >= 18*3
-         @getLastLevelVertex ((i, b) ->
-            @vertex.splice.apply( @vertex, [b,3].concat( @levelVertex.slice(i*3, i*3+3) ) )
-         ).bind(this)
-         l = @vertex.length - 18*3
-         for i in [0..2]
-            @calculateTriangleNormal(l+i*18)
-            @calculateTriangleNormal(l+i*18+9)
-      ###
-
       # duplicate level
       lastLevelVertex = triangleVertex if triangleVertex?
       lastLevelVertex = @getLevelAsTriangle() unless lastLevelVertex?
@@ -114,7 +100,6 @@ class TheMesh extends Mesh
 
    updateVertexPos: ->
       gl = @gl
- 
       # update local vertex
       @getLastLevelVertex ((i, b) ->
          @vertex.splice.apply(
@@ -157,4 +142,3 @@ class TheMesh extends Mesh
    draw: () ->
       @updateVertexPos()
       super
-      #super @gl.LINE_LOOP
