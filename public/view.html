@@ -71,9 +71,10 @@
    varying vec3 col;
    varying vec3 normal;
    const float timeexponent = 1.0;
+
    void main() {
       vec4 position = mview * mmodel * vec4(vposition, 1);
-   
+
       float distance2D = position.x * position.x + position.z * position.z;
    
       position.y += 10.0 * sin(distance2D * sin((wtime * timeexponent + 36000.0) / 143.0) / 1000.0);
@@ -86,9 +87,8 @@
       position.y = x * sin(om) + y * cos(om);
       position.x = x * cos(om) - y * sin(om);
    
-  
-      vec4 vRes = mnormalmatrix*vec4(vnormal, 0.0);
-      normal = vRes.xyz;
+      vec3 vRes = ( mnormalmatrix * vec4(vnormal, 1.0) ).xyz;
+      normal = normalize( vRes );
       gl_Position = mprojection * position;
    
    }
@@ -97,6 +97,12 @@
    precision highp float;
    precision highp int;
    varying vec3 normal;
+
+   struct material
+   {
+      vec3 vcolor;
+   };
+   material meshmaterial = material(vec3(1., 1., 1.));
 
    struct directionalLight
    {
@@ -107,8 +113,17 @@
    uniform directionalLight sunlight;
 
    void main() {
-      float fdiffuseintensity = max(dot(normalize(normal), -sunlight.vdirection), 0.);
-      gl_FragColor = vec4(1.,1.,1.,1)*vec4(sunlight.vcolor*(sunlight.fambientintensity+fdiffuseintensity), 1.);
+      float fdiffuseintensity =
+         max( dot( normal, -sunlight.vdirection ), 0.6 );
+      if (fdiffuseintensity == 0.6) {
+         fdiffuseintensity -= 
+            max( dot( normal, sunlight.vdirection ), 0.) / 4.0;
+      }
+      gl_FragColor = vec4(
+         meshmaterial.vcolor *
+         sunlight.vcolor *
+         (fdiffuseintensity + sunlight.fambientintensity),
+      1.);
    }
    </script>
    <script id="simpleVertexShader" type="x-shader/x-vertex">

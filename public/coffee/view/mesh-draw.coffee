@@ -32,6 +32,7 @@ MeshCanvas = do ->
          asset.modelMatrix, false )
 
       if asset.program.normalMatrixUniform?
+         ###
          normalMatrix = mat4.invert( [],
             mat4.multiply( [],
                asset.modelMatrix,
@@ -39,17 +40,17 @@ MeshCanvas = do ->
             )
          )
          mat4.transpose(normalMatrix,normalMatrix)
-
-         normalMatrix = asset.modelMatrix
+         ###
+         normalMatrix = asset.modelMatrix # lights calculated in world coords
          asset.program.setUniform( 'normalMatrix', 'uniformMatrix4fv',
             normalMatrix, false )
 
       asset.mesh.draw()
 
    drawLight = (program) ->
-      program.setUniform( 'lightColor', 'uniform3fv', [1.0, 0.99, 0.8] )
+      program.setUniform( 'lightColor', 'uniform3fv', [1.0, 0.93, 0.8] )
       program.setUniform( 'lightDirection', 'uniform3fv', [0.0,0, -1] )
-      program.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.333 )
+      program.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.2 )
 
    draw = ->
       meshCanvas.stats.begin()
@@ -189,7 +190,7 @@ MeshCanvas = do ->
          meshCanvas.normalsVisor.modelMatrix,
          translation)
 
-      meshCanvas.normalsVisor.show = true
+      meshCanvas.normalsVisor.show = false
  
       return
 
