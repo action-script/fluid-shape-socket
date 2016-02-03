@@ -52,7 +52,7 @@ class Mesh
    draw: (type = @gl.TRIANGLES) ->
       gl = @gl
       # bind all the vbo streams
-      for buffer in @buffers
+      for i,buffer of @buffers
          gl.bindBuffer gl.ARRAY_BUFFER, buffer.vbo
          @setUpAttribPointer(buffer)
 
