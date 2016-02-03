@@ -142,6 +142,25 @@
          gl_FragColor = vec4(0.1,0.1,1.0,1.0);
       }
    </script>
+   <script id="effectVertexShader" type="x-shader/x-vertex">
+      attribute vec2 vposition;
+      attribute vec2 vuv;
+      varying vec2 uv;
+      void main() {
+         uv = vuv;
+         gl_Position =  vec4(vposition, 0.0, 1.0);
+      }
+   </script>
+   <script id="normalEffectShader" type="x-shader/x-fragment">
+      // TODO: cleanup shaders. better place, generic setup
+      precision highp float;
+      precision highp int;
+      varying vec2 uv;
+      uniform sampler2D ttexture;
+      void main(){
+         gl_FragColor.xyz = vec3(0., 0., 0.) + texture2D( ttexture, uv ).xyz;
+      }
+   </script>
    <script src="components/socket.io-client/socket.io.js"></script>
    <script src="externals/jquery/dist/jquery.min.js"></script>
    <script src="externals/noisejs/index.js"></script>

@@ -52,9 +52,8 @@ MeshCanvas = do ->
       program.setUniform( 'lightDirection', 'uniform3fv', [0.0,0, -1] )
       program.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.2 )
 
-   draw = ->
-      meshCanvas.stats.begin()
-      # clear BG as black
+   drawScene = ->
+      # clear Color buffer and Depth buffer
       gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
       meshCanvas.mainShader.use()
@@ -68,6 +67,36 @@ MeshCanvas = do ->
       if meshCanvas.normalsVisor.show
          meshCanvas.normalsVisor.program.use()
          drawAsset( meshCanvas.normalsVisor )
+
+      return
+
+   drawEffect = (effect, source) ->
+      gl.cullFace gl.FRONT
+      # clear Color buffer and Depth buffer
+      gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
+
+      meshCanvas.effects[effect].use()
+      # use the last framebuffer rendered color image texture
+      gl.bindTexture gl.TEXTURE_2D, source.id
+      #gl.generateMipmap gl.TEXTURE_2D
+      
+      # draw texture on screen
+      meshCanvas.effects.square.draw()
+
+      # unbind
+      gl.bindTexture gl.TEXTURE_2D, null
+      gl.cullFace gl.BACK
+
+   draw = ->
+      meshCanvas.stats.begin()
+
+      # draw normal scene
+      meshCanvas.fbo.use()
+      drawScene()
+      meshCanvas.fbo.stop()
+
+      # draw effects
+      drawEffect('normal', meshCanvas.sceneColor)
 
       meshCanvas.stats.end()
       return
@@ -95,6 +124,17 @@ MeshCanvas = do ->
       return
 
    loadResources = ->
+      # - framebuffer -
+      meshCanvas.sceneColor =
+         FBO.genTextureImage( meshCanvas.width, meshCanvas.height )
+      meshCanvas.sceneDepth =
+         FBO.genRenderBufferImage( meshCanvas.width, meshCanvas.height )
+
+      meshCanvas.fbo = new FBO()
+      meshCanvas.fbo.attachColor( meshCanvas.sceneColor )
+      meshCanvas.fbo.attachDepth( meshCanvas.sceneDepth )
+      meshCanvas.fbo.checkFboSatus()
+ 
       # - shader -
       meshCanvas.mainShader = new Shader('mesh')
       meshCanvas.mainShader.bindUniform( 'projectionMatrix', 'mprojection' )
@@ -135,6 +175,7 @@ MeshCanvas = do ->
 
       # gl mesh
       meshCanvas.lid.mesh = new Mesh()
+      # vertex
       meshCanvas.lid.mesh.initBuffer({
          id: 0
          data: triangleVertex
@@ -142,6 +183,7 @@ MeshCanvas = do ->
          attribPointerSize: 3
          usage: gl.DYNAMIC_DRAW
       })
+      # uv
       meshCanvas.lid.mesh.initBuffer({
          id: 1
          data: [0,0,1,0,0,1,0,0,1]
@@ -168,6 +210,31 @@ MeshCanvas = do ->
          meshCanvas.aspect
       )
       meshCanvas.camera.far_plane = 400
+
+      # - post processing effects -
+      effects = {}
+      effects.normal = new Shader('normal', true)
+      effects.normal.bindUniform( 'textureSample', 'ttexture' )
+
+      effects.square = new Mesh()
+      effects.square.initBuffer({
+         id: 0
+         data: [-1,-1, -1,1, 1,1, 1,-1]
+         attribPointerId: effects.normal.vertexPositionAttribute
+         attribPointerSize: 2
+         usage: gl.STATIC_DRAW
+      })
+      effects.square.initBuffer({
+         id: 2
+         data: [0,0, 0,1, 1,1, 1,0]
+         attribPointerId: effects.normal.texCordAttribute
+         attribPointerSize: 2
+         usage: gl.STATIC_DRAW
+
+      })
+      effects.square.initBufferIndex([0,1,2,0,2,3])
+      
+      meshCanvas.effects = effects
 
       # normals visor
       meshCanvas.simpleShader = new Shader('simple')
@@ -197,7 +264,7 @@ MeshCanvas = do ->
    setUpRender = ->
       gl.clearColor 0.0, 0.0, 0.0, 1.0
       # enable alpha
-      gl.blendFunc gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA
+      # gl.blendFunc gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA
       # near things obscure far things
       gl.depthFunc gl.LEQUAL
 
@@ -233,6 +300,8 @@ MeshCanvas = do ->
       canvas.height = window.innerHeight
 
       meshCanvas.aspect = window.innerWidth / window.innerHeight
+      meshCanvas.width = canvas.width
+      meshCanvas.height = canvas.height
 
       try
          gl = WebGL.getInstance(canvas)

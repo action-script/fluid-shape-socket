@@ -1,13 +1,18 @@
 class Shader
-   constructor: (@name) ->
+   constructor: (@name, @effect = false) ->
       @gl = WebGL.getInstance()
       gl = @gl
       # create shader program
       @program = gl.createProgram()
-      
-      # load and compile shaders
-      vertexShader = @loadFromScript(@name+'VertexShader')
-      fragmentShader = @loadFromScript(@name+'FragmentShader')
+     
+      unless @effect
+         # load and compile shaders
+         vertexShader = @loadFromScript(@name+'VertexShader')
+         fragmentShader = @loadFromScript(@name+'FragmentShader')
+
+      if @effect
+         vertexShader = @loadFromScript('effectVertexShader')
+         fragmentShader = @loadFromScript(@name+'EffectShader')
 
       # attach shaders to program
       gl.attachShader @program, vertexShader
@@ -25,6 +30,10 @@ class Shader
       throw ('Error: attribute "vertex" not found') if @vertexPositionAttribute < 0
       @vertexNormalAttribute = gl.getAttribLocation @program, 'vnormal'
 #      throw ('Error: attribute "normal" not found') if @vertexNormalAttribute < 0
+
+      if @effect
+         @texCordAttribute = gl.getAttribLocation @program, 'vuv'
+         throw ('Error: attribute "UV" not found') if @texCordAttribute < 0
 
    destroy: ->
       shaders = @gl.getAttachedShaders @program
