@@ -26,7 +26,7 @@ class TheMesh extends Mesh
          data: @normals
          attribPointerId: @program.vertexNormalAttribute
          attribPointerSize: 3
-         usage: gl.STATIC_DRAW
+         usage: gl.DYNAMIC_DRAW
       @initBuffer(bufferData)
 
    addLevel: (triangleVertex = null) ->
