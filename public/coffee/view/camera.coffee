@@ -7,15 +7,6 @@ class Camera
          view: mat4.create()
          projection: mat4.create()
 
-      @axis =
-         x: vec3.create()
-         y: vec3.create()
-         z: vec3.create()
-
-      vec3.set(@axis.x, 1, 0, 0)
-      vec3.set(@axis.y, 0, 1, 0)
-      vec3.set(@axis.z, 0, 0, 1)
-
       @_fov = 60
       @_n_plane = 0.1
       @_f_plane = 150
