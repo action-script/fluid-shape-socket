@@ -60,6 +60,7 @@
       <div class="slave"></div>
    </div>
    <script id="meshVertexShader" type="x-shader/x-vertex">
+   // TODO: cleanup shaders. better place, generic setup
    // TODO: add deformation function
    attribute vec3 vposition;
    attribute vec3 vnormal;
@@ -102,7 +103,7 @@
    {
       vec3 vcolor;
    };
-   material meshmaterial = material(vec3(1., 1., 1.));
+   material meshmaterial = material(vec3(.9, .9, .9));
 
    struct directionalLight
    {
@@ -147,18 +148,17 @@
       attribute vec2 vuv;
       varying vec2 uv;
       void main() {
-         uv = vuv;
+         uv = vuv.st;
          gl_Position =  vec4(vposition, 0.0, 1.0);
       }
    </script>
    <script id="normalEffectShader" type="x-shader/x-fragment">
-      // TODO: cleanup shaders. better place, generic setup
       precision highp float;
       precision highp int;
       varying vec2 uv;
       uniform sampler2D ttexture;
       void main(){
-         gl_FragColor.xyz = vec3(0., 0., 0.) + texture2D( ttexture, uv ).xyz;
+         gl_FragColor.xyz = texture2D( ttexture, uv ).xyz;
       }
    </script>
    <script src="components/socket.io-client/socket.io.js"></script>

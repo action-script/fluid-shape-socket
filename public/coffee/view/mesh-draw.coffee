@@ -3,6 +3,7 @@ MeshCanvas = do ->
    meshCanvas =
       canvas: $ '<canvas/>', {'id':'meshCanvas'}
       drawInterval: 16
+      resolutionScale: 2
       darwLoopId: undefined
       time: 0.0
       acReduction: 100.5
@@ -71,31 +72,36 @@ MeshCanvas = do ->
       return
 
    drawEffect = (effect, source) ->
-      gl.cullFace gl.FRONT
       # clear Color buffer and Depth buffer
       gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
       meshCanvas.effects[effect].use()
+
       # use the last framebuffer rendered color image texture
       gl.bindTexture gl.TEXTURE_2D, source.id
-      #gl.generateMipmap gl.TEXTURE_2D
       
       # draw texture on screen
       meshCanvas.effects.square.draw()
 
       # unbind
       gl.bindTexture gl.TEXTURE_2D, null
-      gl.cullFace gl.BACK
 
    draw = ->
       meshCanvas.stats.begin()
 
       # draw normal scene
       meshCanvas.fbo.use()
+      gl.viewport(
+         0, 0,
+         meshCanvas.width * meshCanvas.resolutionScale,
+         meshCanvas.height * meshCanvas.resolutionScale
+      )
       drawScene()
       meshCanvas.fbo.stop()
 
       # draw effects
+      gl.viewport(0, 0, meshCanvas.width, meshCanvas.height)
+      #drawEffect('colorCorrection', meshCanvas.sceneColor)
       drawEffect('normal', meshCanvas.sceneColor)
 
       meshCanvas.stats.end()
@@ -113,6 +119,7 @@ MeshCanvas = do ->
             meshCanvas.theMesh.mesh.levelVertex[i*3+2]
          )
       # accumulate camera rotation
+      meshCanvas.camera.rotation_z -= 0.4
       meshCanvas.camera.rotation_z -= meshCanvas.cameraMove.y
       meshCanvas.camera.rotation_x -= meshCanvas.cameraMove.x
       meshCanvas.camera.rotation_x =
@@ -126,9 +133,9 @@ MeshCanvas = do ->
    loadResources = ->
       # - framebuffer -
       meshCanvas.sceneColor =
-         FBO.genTextureImage( meshCanvas.width, meshCanvas.height )
+         FBO.genTextureImage( meshCanvas.width, meshCanvas.height, meshCanvas.resolutionScale )
       meshCanvas.sceneDepth =
-         FBO.genRenderBufferImage( meshCanvas.width, meshCanvas.height )
+         FBO.genRenderBufferImage( meshCanvas.width, meshCanvas.height, meshCanvas.resolutionScale )
 
       meshCanvas.fbo = new FBO()
       meshCanvas.fbo.attachColor( meshCanvas.sceneColor )
@@ -215,18 +222,19 @@ MeshCanvas = do ->
       effects = {}
       effects.normal = new Shader('normal', true)
       effects.normal.bindUniform( 'textureSample', 'ttexture' )
+      #effects.colorCorrection = new Shader('colorCorrection', true)
 
       effects.square = new Mesh()
       effects.square.initBuffer({
          id: 0
-         data: [-1,-1, -1,1, 1,1, 1,-1]
+         data: [-1,1, -1,-1, 1,-1, 1,1]
          attribPointerId: effects.normal.vertexPositionAttribute
          attribPointerSize: 2
          usage: gl.STATIC_DRAW
       })
       effects.square.initBuffer({
          id: 2
-         data: [0,0, 0,1, 1,1, 1,0]
+         data: [0,1, 0,0, 1,0, 1,1]
          attribPointerId: effects.normal.texCordAttribute
          attribPointerSize: 2
          usage: gl.STATIC_DRAW
@@ -265,8 +273,6 @@ MeshCanvas = do ->
       gl.clearColor 0.0, 0.0, 0.0, 1.0
       # enable alpha
       # gl.blendFunc gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA
-      # near things obscure far things
-      gl.depthFunc gl.LEQUAL
 
       # 3D z geometry
       gl.enable gl.DEPTH_TEST
@@ -299,9 +305,9 @@ MeshCanvas = do ->
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 
-      meshCanvas.aspect = window.innerWidth / window.innerHeight
       meshCanvas.width = canvas.width
       meshCanvas.height = canvas.height
+      meshCanvas.aspect = window.innerWidth / window.innerHeight
 
       try
          gl = WebGL.getInstance(canvas)

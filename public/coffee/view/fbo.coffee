@@ -47,11 +47,11 @@ class FBO
 
    # constants
 
-   @genTextureImage: (width, height) ->
+   @genTextureImage: (width, height, scale = 1) ->
       gl = WebGL.getInstance()
       img =
-         width: width
-         height:height
+         width: width * scale
+         height:height * scale
          format: gl.RGBA
          target: gl.TEXTURE_2D
      
@@ -69,10 +69,10 @@ class FBO
          null              # data
       )
 
-#      gl.texParameteri img.target, gl.TEXTURE_MAG_FILTER, gl.LINEAR
-#      gl.texParameteri img.target, gl.TEXTURE_MIN_FILTER, gl.LINEAR
-      gl.texParameteri img.target, gl.TEXTURE_MAG_FILTER, gl.NEAREST
-      gl.texParameteri img.target, gl.TEXTURE_MIN_FILTER, gl.NEAREST
+      gl.texParameteri img.target, gl.TEXTURE_MAG_FILTER, gl.LINEAR
+      gl.texParameteri img.target, gl.TEXTURE_MIN_FILTER, gl.LINEAR
+#      gl.texParameteri img.target, gl.TEXTURE_MAG_FILTER, gl.NEAREST
+#      gl.texParameteri img.target, gl.TEXTURE_MIN_FILTER, gl.NEAREST
 #      gl.texParameteri img.target, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR
       gl.texParameteri img.target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE
       gl.texParameteri img.target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE
@@ -82,11 +82,11 @@ class FBO
 
       return img
 
-   @genRenderBufferImage: (width, height)  ->
+   @genRenderBufferImage: (width, height, scale = 1)  ->
       gl = WebGL.getInstance()
       img =
-         width: width
-         height: height
+         width: width * scale
+         height: height * scale
          format: gl.DEPTH_COMPONENT16
          target: gl.RENDERBUFFER
 
