@@ -67,6 +67,8 @@ MeshCanvas = do ->
       # normals visor
       if meshCanvas.normalsVisor.show
          meshCanvas.normalsVisor.program.use()
+         meshCanvas.normalsVisor.program.setUniform( 'color', 'uniform3fv', [0.0,0.0,1.0] )
+         meshCanvas.normalsVisor.program.setUniform( 'billboard', 'uniform1f', 0.0 )
          drawAsset( meshCanvas.normalsVisor )
 
       return
@@ -86,10 +88,41 @@ MeshCanvas = do ->
       # unbind
       gl.bindTexture gl.TEXTURE_2D, null
 
+   drawCircles = ->
+      meshCanvas.circle.program.use()
+      meshCanvas.circle.program.useCamera(meshCanvas.camera)
+      meshCanvas.circle.program.setUniform( 'color', 'uniform3fv', [1.0,1.0,1.0] )
+      meshCanvas.circle.program.setUniform( 'billboard', 'uniform1f', 1.0 )
+
+      translation = vec3.create()
+      for i in [0..2]
+         # translate circles into vertex positions
+         mat4.identity(meshCanvas.circle.modelMatrix)
+         vec3.set(translation,
+            meshCanvas.theMesh.mesh.levelVertex[i*3],
+            meshCanvas.theMesh.mesh.levelVertex[i*3+1],
+            meshCanvas.theMesh.mesh.levelVertex[i*3+2]
+         )
+         mat4.translate(
+            meshCanvas.circle.modelMatrix,
+            meshCanvas.circle.modelMatrix,
+            translation
+         )
+
+         meshCanvas.circle.program.setUniform(
+            'modelMatrix',
+            'uniformMatrix4fv',
+            meshCanvas.circle.modelMatrix,
+            false
+         )
+
+         meshCanvas.circle.mesh.draw(gl.LINE_LOOP)
+
    draw = ->
       meshCanvas.stats.begin()
 
       # draw normal scene
+      gl.enable gl.DEPTH_TEST
       meshCanvas.fbo.use()
       gl.viewport(
          0, 0,
@@ -98,11 +131,15 @@ MeshCanvas = do ->
       )
       drawScene()
       meshCanvas.fbo.stop()
+      gl.disable gl.DEPTH_TEST
 
       # draw effects
       gl.viewport(0, 0, meshCanvas.width, meshCanvas.height)
       #drawEffect('colorCorrection', meshCanvas.sceneColor)
       drawEffect('normal', meshCanvas.sceneColor)
+
+      # draw vertex circle indicators
+      drawCircles()
 
       meshCanvas.stats.end()
       return
@@ -119,7 +156,6 @@ MeshCanvas = do ->
             meshCanvas.theMesh.mesh.levelVertex[i*3+2]
          )
       # accumulate camera rotation
-      meshCanvas.camera.rotation_z -= 0.4
       meshCanvas.camera.rotation_z -= meshCanvas.cameraMove.y
       meshCanvas.camera.rotation_x -= meshCanvas.cameraMove.x
       meshCanvas.camera.rotation_x =
@@ -210,6 +246,38 @@ MeshCanvas = do ->
          meshCanvas.lid.modelMatrix,
          translation)
 
+      # - vertex circle indicator -
+      meshCanvas.simpleShader = new Shader('simple')
+      meshCanvas.simpleShader.bindUniform( 'projectionMatrix', 'mprojection' )
+      meshCanvas.simpleShader.bindUniform( 'viewMatrix', 'mview' )
+      meshCanvas.simpleShader.bindUniform( 'modelMatrix', 'mmodel' )
+
+      meshCanvas.circle = {}
+      meshCanvas.circle.program = meshCanvas.simpleShader
+
+      # gl mesh
+      meshCanvas.circle.mesh = new Mesh()
+      circleVertex = Geometric.circle(0.1, 15)
+      # vertex
+      meshCanvas.circle.mesh.initBuffer({
+         id: 0
+         data: circleVertex
+         attribPointerId: meshCanvas.simpleShader.vertexPositionAttribute
+         attribPointerSize: 3
+         usage: gl.STATIC_DRAW
+      })
+
+      # default position of the mesh
+      meshCanvas.circle.modelMatrix = mat4.create()
+
+      mat4.identity(meshCanvas.circle.modelMatrix) # set to identity
+      translation = vec3.create()
+      vec3.set(translation, 0, 0, 0.2)
+      mat4.translate(
+         meshCanvas.circle.modelMatrix,
+         meshCanvas.circle.modelMatrix,
+         translation)
+
       # - camera -
       meshCanvas.camera = new Camera(
          [0,-2,1.4],
@@ -245,13 +313,10 @@ MeshCanvas = do ->
       meshCanvas.effects = effects
 
       # normals visor
-      meshCanvas.simpleShader = new Shader('simple')
-      meshCanvas.simpleShader.bindUniform( 'projectionMatrix', 'mprojection' )
-      meshCanvas.simpleShader.bindUniform( 'viewMatrix', 'mview' )
-      meshCanvas.simpleShader.bindUniform( 'modelMatrix', 'mmodel' )
-
       meshCanvas.normalsVisor = {}
       meshCanvas.normalsVisor.program = meshCanvas.simpleShader
+      meshCanvas.normalsVisor.program.bindUniform( 'color', 'vcolor' )
+      meshCanvas.normalsVisor.program.bindUniform( 'billboard', 'drawbillboard' )
 
       meshCanvas.normalsVisor.mesh = new NormalsVisor(meshCanvas.simpleShader, meshCanvas.theMesh.mesh)
 

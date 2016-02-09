@@ -132,15 +132,40 @@
       uniform mat4 mprojection;
       uniform mat4 mview;
       uniform mat4 mmodel;
-      void main() {
-         gl_Position = mprojection * (mmodel * mview) * vec4(vposition, 1);
+      uniform float drawbillboard;
+
+      mat4 billboard (mat4 modelView) {
+         // First colunm.
+         modelView[0][0] = 1.0; 
+         modelView[0][1] = 0.0; 
+         modelView[0][2] = 0.0; 
+
+         // Second colunm.
+         modelView[1][0] = 0.0; 
+         modelView[1][1] = 1.0; 
+         modelView[1][2] = 0.0; 
+
+         // Thrid colunm.
+         modelView[2][0] = 0.0; 
+         modelView[2][1] = 0.0; 
+         modelView[2][2] = 1.0; 
+
+         return modelView;
       }
-   </script>
+      void main() {
+         mat4 modelview = mview * mmodel;
+         if (drawbillboard != 0.0) {
+            modelview = billboard(modelview);
+         }
+         gl_Position = mprojection * (modelview * vec4(vposition, 1) );
+      }
+      </script>
    <script id="simpleFragmentShader" type="x-shader/x-fragment">
       precision highp float;
       precision highp int;
+      uniform vec3 vcolor;
       void main() {
-         gl_FragColor = vec4(0.1,0.1,1.0,1.0);
+         gl_FragColor = vec4(vcolor,1.0);
       }
    </script>
    <script id="effectVertexShader" type="x-shader/x-vertex">
