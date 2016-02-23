@@ -1,5 +1,5 @@
 # fluid mesh socket
-Interactive WegGL prototype combining multiple smartphone devices and websockets.  
+Interactive WebGL prototype combining multiple smartphone devices and websockets.  
 Generating a collaborative tridimensional shape using the tilt sensor from the devices and translate them into information for vector position.
 
 
