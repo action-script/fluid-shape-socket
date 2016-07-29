@@ -9,10 +9,10 @@ $().ready ->
    socket = io({
       reconnection: false
    })
-   socket.on 'ping', (data) ->
+   socket.on 'myping', (data) ->
       console.log('ping', data)
       window.config.socket.id = data.socketId
-      socket.emit('pong', { clientType: 'slave' })
+      socket.emit('mypong', { clientType: 'slave' })
 
    socket.on 'confirmConnection', (data) ->
       console.log('connection confirmed', data)
@@ -23,10 +23,15 @@ $().ready ->
 
       setInterval(calculateCameraPos, 50) if config.status == 'camera'
 
+      $('#block').hide()
+      $('#vertex').hide()
+      $('#camera').hide()
       $('#' + config.status).show()
 
    socket.on 'blocked', (data) ->
       console.log('blocked')
+      $('#vertex').hide()
+      $('#camera').hide()
       $('#block').show()
 
    socket.on 'readyToDraw', (data) ->
@@ -49,7 +54,7 @@ $().ready ->
             'pos':
                'x': acelerometer.x,
                'y': acelerometer.y
-      
+
    move3D = (ac) ->
       if config.status == 'vertex'
          $('#wrapper_v')[0].style.WebkitTransform =

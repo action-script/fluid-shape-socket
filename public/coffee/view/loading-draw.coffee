@@ -69,7 +69,7 @@ LoadingCanvas = do ->
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
    drawMainCircle = (canvas, ctx) ->
-      # draw main circre    
+      # draw main circre
       ctx.lineWidth = 1
       ctx.strokeStyle = loadingCanvas.elements.mainCircle.color
       ctx.beginPath()
@@ -80,7 +80,7 @@ LoadingCanvas = do ->
          0,2*Math.PI)
       ctx.stroke()
       ctx.closePath()
-  
+
    drawNodes = (canvas, ctx) ->
       # draw nodes
       for i in [0..2]
@@ -153,7 +153,7 @@ LoadingCanvas = do ->
       grd.addColorStop(1, '#000000')
       ctx.fillStyle = grd
       ctx.fillRect(0, 0, canvas.width, canvas.height)
- 
+
    draw = (canvas, ctx) ->
       drawbackGround(canvas, ctx)
 
@@ -200,6 +200,10 @@ LoadingCanvas = do ->
       $(loadingCanvas.canvas).remove()
       removeIndicator()
 
+   restart = ->
+      @stop()
+      @init()
+
    activateSlave = (data) ->
       activateIndicator(data.slaveId)
       if data.slaveId < 4
@@ -214,6 +218,7 @@ LoadingCanvas = do ->
 
    return {
       init
+      restart
       activateSlave
       stop
    }

@@ -54,7 +54,7 @@ class FBO
          height:height * scale
          format: gl.RGBA
          target: gl.TEXTURE_2D
-     
+
       img.id = gl.createTexture()
       gl.bindTexture img.target, img.id
       gl.texImage2D(

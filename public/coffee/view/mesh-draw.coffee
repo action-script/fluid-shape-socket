@@ -81,7 +81,7 @@ MeshCanvas = do ->
 
       # use the last framebuffer rendered color image texture
       gl.bindTexture gl.TEXTURE_2D, source.id
-      
+
       # draw texture on screen
       meshCanvas.effects.square.draw()
 
@@ -177,7 +177,7 @@ MeshCanvas = do ->
       meshCanvas.fbo.attachColor( meshCanvas.sceneColor )
       meshCanvas.fbo.attachDepth( meshCanvas.sceneDepth )
       meshCanvas.fbo.checkFboSatus()
- 
+
       # - shader -
       meshCanvas.mainShader = new Shader('mesh')
       meshCanvas.mainShader.bindUniform( 'projectionMatrix', 'mprojection' )
@@ -309,7 +309,7 @@ MeshCanvas = do ->
 
       })
       effects.square.initBufferIndex([0,1,2,0,2,3])
-      
+
       meshCanvas.effects = effects
 
       # normals visor
@@ -331,7 +331,7 @@ MeshCanvas = do ->
          translation)
 
       meshCanvas.normalsVisor.show = false
- 
+
       return
 
    setUpRender = ->
@@ -346,7 +346,7 @@ MeshCanvas = do ->
 #      gl.frontFace gl.CW
 
       meshCanvas.drawLoopId = setInterval(updateTime, meshCanvas.drawInterval)
-      setInterval () ->
+      meshCanvas.effectLoopId = setInterval () ->
          meshCanvas.theMesh.mesh.addLevel()
          meshCanvas.theMesh.mesh.repostMeshData()
       , meshCanvas.drawInterval * (meshCanvas.growSize/meshCanvas.growVelcity)
@@ -385,8 +385,14 @@ MeshCanvas = do ->
       initStats()
       setUpRender()
 
+   stop = ->
+      clearInterval(meshCanvas.drawLoopId)
+      clearInterval(meshCanvas.effectLoopId)
+      $(meshCanvas.canvas).remove()
+
    return {
       init
+      stop
       pushVertexPos
       moveCamera
    }

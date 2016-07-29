@@ -30,31 +30,31 @@ app.get('/config', function(req, res) {
 
 // socket
 var io = require('socket.io').listen(server)
-var numberOfSlaves = 0
+var slaveIds = []
 var viewSocket = null
 
 io.on('connection', function (socket) {
+   console.log('connection', socket.id);
+   socket.emit('myping', { socketId: socket.id })
 
-   socket.emit('ping', { socketId: socket.id })
-
-   socket.on('pong', function(data) {
-      console.log('pong', data)
+   socket.on('mypong', function(data) {
       if (data.clientType == 'slave') {
-         console.log('slave ' + (numberOfSlaves + 1))
-         if (numberOfSlaves >= 4 || viewSocket == null) {
+         console.log('slave ' + slaveIds.length)
+         if (slaveIds.length >= 4 || viewSocket == null) {
             socket.emit('blocked') 
             socket.disconnect()
          }
          else
-            socket.emit('confirmConnection', { slaveId: ++numberOfSlaves })
-            if (numberOfSlaves == 4) {
+            slaveIds.push(socket.id)
+            socket.emit('confirmConnection', { slaveId: slaveIds.length })
+            if (slaveIds.length == 4) {
                console.log('4 connections. Ready to be Drawn')
                socket.broadcast.emit('readyToDraw')
             }
       }
       // Save view socket
       else {
-         if (data.clientType == 'view') {
+         if (data.clientType == 'view' && viewSocket == null) {
             viewSocket = socket.id
             console.log("View socket is now " + socket.id)
          }
@@ -73,13 +73,25 @@ io.on('connection', function (socket) {
 
    socket.on('disconnect', function() {
       console.log('disconnected', socket.id)
+      slaveIds = []
 
       if (viewSocket == socket.id) {
+         viewSocket = null
          console.log('disconnecting all slaves')
          io.sockets.sockets.forEach(function(s) {
             s.disconnect(true)
          })
-         numberOfSlaves = 0
+      }
+      else {
+         socket.broadcast.emit('restart')
+         io.sockets.sockets.forEach(function(s, i) {
+            if (i != 0)
+               slaveIds.push(s.id) 
+            s.emit(
+               'confirmConnection',
+               { slaveId: i, restart: true }
+            )
+         })
       }
    })
 

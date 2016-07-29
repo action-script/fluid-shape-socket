@@ -3,16 +3,16 @@ $().ready ->
    window.config.socket = {}
    window.config.drawing = false
    slaves = []
- 
+
    # socket app
    socket = io()
-   socket.on 'ping', (data) ->
+   socket.on 'myping', (data) ->
       console.log('ping', data)
       config.socket.id = data.socketId
-      socket.emit('pong', { clientType: 'view' })
+      socket.emit('mypong', { clientType: 'view' })
       LoadingCanvas.init()
       #MeshCanvas.init()
-  
+
    socket.on 'new Slave', (data) ->
       console.log('I got a new slave', data)
       slaves.push(data)
@@ -25,6 +25,10 @@ $().ready ->
          config.drawing = true
       , 2000
       console.log('ready to be drawn')
+
+   socket.on 'restart', (data) ->
+      MeshCanvas.stop()
+      LoadingCanvas.restart()
 
    socket.on 'newPosition', (data) ->
       console.log('new position')
