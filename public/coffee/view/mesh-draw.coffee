@@ -8,8 +8,8 @@ MeshCanvas = do ->
       time: 0.0
       acReduction: 100.5
       acReductionCamera: 20.0
-      growVelcity: 0.002
-      growSize: 0.25
+      growVelcity: 0.01
+      growSize: 0.1
       ready: false
       cameraMove:
          x: 0
@@ -49,9 +49,9 @@ MeshCanvas = do ->
       asset.mesh.draw()
 
    drawLight = (program) ->
-      program.setUniform( 'lightColor', 'uniform3fv', [1.0, 0.93, 0.8] )
+      program.setUniform( 'lightColor', 'uniform3fv', [0.8, 0.73, 0.71] )
       program.setUniform( 'lightDirection', 'uniform3fv', [0.0,0, -1] )
-      program.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.2 )
+      program.setUniform( 'lightAmbientIntensity', 'uniform1f', 0.17 )
 
    drawScene = ->
       # clear Color buffer and Depth buffer
@@ -335,7 +335,8 @@ MeshCanvas = do ->
       return
 
    setUpRender = ->
-      gl.clearColor 0.0, 0.0, 0.0, 1.0
+      #gl.clearColor 0.0, 0.0, 0.0, 1.0
+      gl.clearColor 0.023, 0.031, 0.027, 1.0
       # enable alpha
       # gl.blendFunc gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA
 
