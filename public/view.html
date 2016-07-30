@@ -182,8 +182,15 @@
       precision highp int;
       varying vec2 uv;
       uniform sampler2D ttexture;
+      float qnt = 0.003;
+
       void main(){
-         gl_FragColor.xyz = texture2D( ttexture, uv ).xyz;
+//         gl_FragColor.xyz = texture2D( ttexture, uv ).xyz;
+         vec4 rca = texture2D( ttexture, uv - vec2(-0.4*qnt, 0.) );
+         vec4 gca = texture2D( ttexture, uv - vec2( .0, .0) );
+         vec4 bca = texture2D( ttexture, uv - vec2(0.4*qnt, 0.) );
+
+         gl_FragColor = vec4(rca.r, gca.g, bca.b, 1.);
       }
    </script>
    <script src="/externals/socket.io-client/socket.io.js"></script>
